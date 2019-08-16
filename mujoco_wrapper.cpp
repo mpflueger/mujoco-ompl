@@ -1,7 +1,4 @@
-#include <ompl/base/spaces/SE3StateSpace.h>
-#include <ompl/base/spaces/SO2StateSpace.h>
 #include <ompl/base/StateSpace.h>
-#include <ompl/control/spaces/RealVectorControlSpace.h>
 
 #include "mujoco_wrapper.h"
 
@@ -73,7 +70,7 @@ StateRange getCtrlRange(const mjModel* m, size_t i) {
 }
 
 shared_ptr<oc::SpaceInformation>
-MuJoCoStatePropagator::createSpaceInformation(const mjModel* m) {
+MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
     int control_dim = m->nu;
 
     //////////////////////////////////////////////
@@ -190,14 +187,188 @@ MuJoCoStatePropagator::createSpaceInformation(const mjModel* m) {
     return si;
 }
 
-void MuJoCoStatePropagator::propagate( const ob::State* state,
+
+void MujocoStatePropagator::copyOmplStateToMujoco(
+        const ob::CompoundState* state,
+        const oc::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d) {
+    // Iterate over subspaces to copy data from state to mjData
+    // Copy position state to d->qpos
+    // Copy velocity state to d->qvel
+    assert(si->getStateSpace()->isCompound());
+    auto css(si->getStateSpace()->as<ob::CompoundStateSpace>());
+    int qpos_i = 0;
+    int qvel_i = 0;
+    for(size_t i=0; i < css->getSubspaceCount(); i++) {
+        auto subspace(css->getSubspace(i));
+        const ob::State* substate = (*state)[i];
+
+        // Choose appropriate copy code based on subspace type
+        size_t n;
+        switch (subspace->getType()) {
+          case ob::STATE_SPACE_REAL_VECTOR:
+            n = subspace->as<ob::RealVectorStateSpace>()->getDimension();
+
+            // Check if the vector does not align on the size of qpos
+            // If this happens an assumption has been violated
+            if (qpos_i < m->nq && (qpos_i + n) > m->nq) {
+                throw invalid_argument(
+                    "RealVectorState does not align on qpos");
+            }
+
+            // Copy vector
+            for(size_t i=0; i < n; i++) {
+                // Check if we copy to qpos or qvel
+                if (qpos_i < m->nq) {
+                    d->qpos[qpos_i] = substate
+                        ->as<ob::RealVectorStateSpace::StateType>()->values[i];
+                    qpos_i++;
+                } else {
+                    d->qvel[qvel_i] = substate
+                        ->as<ob::RealVectorStateSpace::StateType>()->values[i];
+                    qvel_i++;
+                }
+            }
+            break;
+
+          case ob::STATE_SPACE_SO2:
+            if (qpos_i >= m->nq) {
+                throw invalid_argument(
+                    "SO2 velocity state should not happen.");
+            }
+
+            d->qpos[qpos_i]
+                = substate->as<ob::SO2StateSpace::StateType>()->value;
+            qpos_i++;
+            break;
+
+          case ob::STATE_SPACE_SO3:
+            if (qpos_i + 4 > m->nq) {
+                throw invalid_argument("SO3 space overflows qpos");
+            }
+
+            copySO3State(
+                substate->as<ob::SO3StateSpace::StateType>(),
+                d->qpos + qpos_i);
+            // That's right MuJoCo, ponter math is what you get when
+            // you write an API like that :P
+            qpos_i += 4;
+            break;
+
+          case ob::STATE_SPACE_SE3:
+            if (qpos_i + 7 > m->nq) {
+                throw invalid_argument("SE3 space overflows qpos");
+            }
+
+            copySE3State(
+                substate->as<ob::SE3StateSpace::StateType>(),
+                d->qpos + qpos_i);
+            qpos_i += 7;
+            break;
+
+          default:
+            throw invalid_argument("Unhandled subspace type.");
+            break;
+        }
+    }
+
+    if (!(qpos_i == m->nq && qvel_i == m->nv)) {
+        throw invalid_argument(
+            "Size of data copied did not match m->nq and m->nv");
+    }
+}
+
+
+void MujocoStatePropagator::copyMujocoStateToOmpl(
+        const mjModel* m,
+        const mjData* d,
+        const oc::SpaceInformation* si,
+        ob::CompoundState* state) {
+    //
+    throw logic_error("Not implemented");
+}
+
+
+void MujocoStatePropagator::copySO3State(
+        const ob::SO3StateSpace::StateType* state,
+        double* data) {
+    data[0] = state->w;
+    data[1] = state->x;
+    data[2] = state->y;
+    data[3] = state->z;
+}
+
+
+void MujocoStatePropagator::copySO3State(
+        const double* data,
+        ob::SO3StateSpace::StateType* state) {
+    state->w = data[0];
+    state->x = data[1];
+    state->y = data[2];
+    state->z = data[3];
+}
+
+
+void MujocoStatePropagator::copySE3State(
+        const ob::SE3StateSpace::StateType* state,
+        double* data) {
+    data[0] = state->getX();
+    data[1] = state->getY();
+    data[2] = state->getZ();
+    copySO3State(&state->rotation(), data + 3);
+}
+
+
+void MujocoStatePropagator::copySE3State(
+        const double* data,
+        ob::SE3StateSpace::StateType* state) {
+    state->setX(data[0]);
+    state->setY(data[1]);
+    state->setZ(data[2]);
+    copySO3State(data + 3, &state->rotation());
+}
+
+
+void MujocoStatePropagator::copyOmplControlToMujoco(
+        const oc::RealVectorControlSpace::ControlType* control,
+        const oc::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d) {
+    int dim = si->getControlSpace()->as<oc::RealVectorControlSpace>()
+        ->getDimension();
+    if (dim != m->nu) {
+        throw invalid_argument(
+            "SpaceInformation and mjModel do not match in control dim");
+    }
+
+    for(size_t i=0; i < dim; i++) {
+        d->ctrl[i] = control->values[i];
+    }
+}
+
+
+void MujocoStatePropagator::propagate( const ob::State* state,
                                        const oc::Control* control,
                                        double duration,
                                        ob::State* result) const {
     mj_lock.lock();
-    // Copy state and control to mj->d
+
+    copyOmplStateToMujoco(state->as<ob::CompoundState>(), si_, mj->m, mj->d);
+    copyOmplControlToMujoco(
+        control->as<oc::RealVectorControlSpace::ControlType>(),
+        si_,
+        mj->m,
+        mj->d);
+
     // Set duration on mj->m
+    mj->m->opt.timestep = duration;
+
     // mj::step()
+    mj->step();
+
     // Copy result to ob::State*
+    copyMujocoStateToOmpl(mj->m, mj->d, si_, result->as<ob::CompoundState>());
+
     mj_lock.unlock();
 }

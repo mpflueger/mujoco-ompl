@@ -6,8 +6,11 @@
 #include <mutex>
 #include <vector>
 
+#include <ompl/base/spaces/SE3StateSpace.h>
+#include <ompl/base/spaces/SO2StateSpace.h>
 #include <ompl/control/StatePropagator.h>
 #include <ompl/control/SpaceInformation.h>
+#include <ompl/control/spaces/RealVectorControlSpace.h>
 
 #include "mujoco.h"
 
@@ -165,9 +168,9 @@ class MuJoCo {
 
 
 
-class MuJoCoStatePropagator : public ompl::control::StatePropagator {
+class MujocoStatePropagator : public ompl::control::StatePropagator {
   public:
-    MuJoCoStatePropagator(
+    MujocoStatePropagator(
             std::shared_ptr<ompl::control::SpaceInformation> si,
             std::shared_ptr<MuJoCo> mj)
             : StatePropagator(si),
@@ -180,6 +183,44 @@ class MuJoCoStatePropagator : public ompl::control::StatePropagator {
     const ompl::control::SpaceInformation* getSpaceInformation() const {
         return si_;
     }
+
+    static void copyOmplStateToMujoco(
+        const ompl::base::CompoundState* state,
+        const ompl::control::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d);
+
+    static void copyMujocoStateToOmpl(
+        const mjModel* m,
+        const mjData* d,
+        const ompl::control::SpaceInformation* si,
+        ompl::base::CompoundState* state);
+
+    static void copyOmplControlToMujoco(
+        const ompl::control::RealVectorControlSpace::ControlType* control,
+        const ompl::control::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d);
+
+    /// Copy SO3State to double array with no bounds checks
+    static void copySO3State(
+        const ompl::base::SO3StateSpace::StateType* state,
+        double* data);
+
+    /// Copy double array to SO3 state with no bounds checks
+    static void copySO3State(
+        const double* data,
+        ompl::base::SO3StateSpace::StateType* state);
+
+    /// Copy SE3State to double array with no bounds checks
+    static void copySE3State(
+        const ompl::base::SE3StateSpace::StateType* state,
+        double* data);
+
+    /// Copy double array to SE3 state with no bounds checks
+    static void copySE3State(
+        const double* data,
+        ompl::base::SE3StateSpace::StateType* state);
 
     // To override this function from oc::StatePropagator, this has to be a
     // const function, but we need to modify the mjModel and mjData objects

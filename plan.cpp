@@ -52,8 +52,8 @@ int main(int argc, char** argv) {
     }
 
     // Setup OMPL environment
-    auto si = MuJoCoStatePropagator::createSpaceInformation(mj->m);
-    auto mj_state_prop(make_shared<MuJoCoStatePropagator>(si, mj));
+    auto si = MujocoStatePropagator::createSpaceInformation(mj->m);
+    auto mj_state_prop(make_shared<MujocoStatePropagator>(si, mj));
     si->setStatePropagator(mj_state_prop);
 
     // Create a SimpleSetup object with custom planner
