@@ -290,6 +290,24 @@ void MujocoStatePropagator::copyMujocoStateToOmpl(
 }
 
 
+void MujocoStatePropagator::copyOmplControlToMujoco(
+        const oc::RealVectorControlSpace::ControlType* control,
+        const oc::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d) {
+    int dim = si->getControlSpace()->as<oc::RealVectorControlSpace>()
+        ->getDimension();
+    if (dim != m->nu) {
+        throw invalid_argument(
+            "SpaceInformation and mjModel do not match in control dim");
+    }
+
+    for(size_t i=0; i < dim; i++) {
+        d->ctrl[i] = control->values[i];
+    }
+}
+
+
 void MujocoStatePropagator::copySO3State(
         const ob::SO3StateSpace::StateType* state,
         double* data) {
@@ -327,24 +345,6 @@ void MujocoStatePropagator::copySE3State(
     state->setY(data[1]);
     state->setZ(data[2]);
     copySO3State(data + 3, &state->rotation());
-}
-
-
-void MujocoStatePropagator::copyOmplControlToMujoco(
-        const oc::RealVectorControlSpace::ControlType* control,
-        const oc::SpaceInformation* si,
-        const mjModel* m,
-        mjData* d) {
-    int dim = si->getControlSpace()->as<oc::RealVectorControlSpace>()
-        ->getDimension();
-    if (dim != m->nu) {
-        throw invalid_argument(
-            "SpaceInformation and mjModel do not match in control dim");
-    }
-
-    for(size_t i=0; i < dim; i++) {
-        d->ctrl[i] = control->values[i];
-    }
 }
 
 

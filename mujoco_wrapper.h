@@ -225,7 +225,8 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
     // To override this function from oc::StatePropagator, this has to be a
     // const function, but we need to modify the mjModel and mjData objects
     // to use MuJoCo to propagate a state
-    // Use a preallocatd object, protect with mutex lock
+    // Use a preallocatd object, protect with mutex lock in case OMPL does
+    // threading
     void propagate(
         const ompl::base::State* state,
         const ompl::control::Control* control,
@@ -241,6 +242,8 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
     }
 
   private:
+    // These have to be mutable because the tyrrany of OMPL makes
+    // propagate a const function and I don't want to reallocate them
     mutable std::shared_ptr<MuJoCo> mj;
     mutable std::mutex mj_lock;
 };
