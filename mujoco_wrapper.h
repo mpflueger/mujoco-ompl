@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <iostream>
 #include <mutex>
 #include <vector>
@@ -81,6 +82,7 @@ class MuJoCo {
         if (!m) {
             std::cerr << error << std::endl;
         }
+        max_timestep = m->opt.timestep;
         return m;
     }
 
@@ -158,10 +160,19 @@ class MuJoCo {
         mj_step(m, d);
     }
 
+    void sim_duration(double duration) {
+        int steps = ceil(duration / max_timestep);
+        m->opt.timestep = duration / steps;
+        for(int i=0; i < steps; i++) {
+            mj_step(m, d);
+        }
+    }
+
     mjModel* m;
     mjData* d;
 
   private:
+    double max_timestep;
     static int mj_instance_count;
     static std::mutex mj_instance_count_lock;
 };
