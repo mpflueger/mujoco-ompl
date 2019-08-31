@@ -1,0 +1,10 @@
+# Index of the time dimension
+delta_t_index: 10
+
+# Dimensions to plot
+smooth_dims:
+  joint0: 0
+  joint1: 1
+step_dims:
+  u_0: 8
+  u_1: 9

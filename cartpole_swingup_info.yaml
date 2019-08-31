@@ -1,0 +1,9 @@
+# Index of the time dimension
+delta_t_index: 5
+
+# Dimensions to plot
+smooth_dims:
+  x: 0
+  theta: 1
+step_dims:
+  u: 4
