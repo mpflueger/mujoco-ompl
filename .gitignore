@@ -6,5 +6,6 @@ cmake_install.cmake
 Makefile
 
 plan
+render_plan
 *.out
 

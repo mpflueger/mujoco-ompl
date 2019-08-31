@@ -141,16 +141,32 @@ class MuJoCo {
         }
     }
 
+    void setState(MuJoCoState s) {
+        d->time = s.time;
+        for(size_t i=0; i < m->nq; i++) {
+            if (i >= s.qpos.size()) break;
+            d->qpos[i] = s.qpos[i];    
+        }
+        for(size_t i=0; i < m->nv; i++) {
+            if (i >= s.qvel.size()) break;
+            d->qvel[i] = s.qvel[i];    
+        }
+        for(size_t i=0; i < m->na; i++) {
+            if (i >= s.act.size()) break;
+            d->act[i] = s.act[i];    
+        }
+    }
+
     MuJoCoState getState() const {
         MuJoCoState s;
         s.time = d->time;
-        for (size_t i=0; i < m->nq; i++) {
+        for(size_t i=0; i < m->nq; i++) {
             s.qpos.push_back(d->qpos[i]);
         }
-        for (size_t i=0; i < m->nv; i++) {
+        for(size_t i=0; i < m->nv; i++) {
             s.qvel.push_back(d->qvel[i]);
         }
-        for (size_t i=0; i < m->na; i++) {
+        for(size_t i=0; i < m->na; i++) {
             s.act.push_back(d->act[i]);
         }
         return s;
@@ -168,6 +184,10 @@ class MuJoCo {
         }
     }
 
+    double getMaxTimestep() const {
+        return max_timestep;
+    }
+
     mjModel* m;
     mjData* d;
 
@@ -177,6 +197,15 @@ class MuJoCo {
     static std::mutex mj_instance_count_lock;
 };
 
+
+/// Read a vectorized OMPL planning state back into data structures
+/// Note: state and control must be pre-allocated from the space info
+void readOmplState(
+    const std::vector<double>& x,
+    const ompl::control::SpaceInformation* si,
+    ompl::base::CompoundState* state,
+    ompl::control::RealVectorControlSpace::ControlType* control,
+    double& duration);
 
 
 class MujocoStatePropagator : public ompl::control::StatePropagator {

@@ -69,6 +69,82 @@ StateRange getCtrlRange(const mjModel* m, size_t i) {
     return r;
 }
 
+
+void readOmplState(
+        const vector<double>& x,
+        const oc::SpaceInformation* si,
+        ob::CompoundState* state,
+        oc::RealVectorControlSpace::ControlType* control,
+        double& duration) {
+    // Vector format: [state, control, duration]
+    // Interate over spaces, then controls, then duration
+
+    assert(si->getStateSpace()->isCompound());
+    auto css(si->getStateSpace()->as<ob::CompoundStateSpace>());
+    auto rvcs(si->getControlSpace()->as<oc::RealVectorControlSpace>());
+
+    // Make sure the data vector is the right size
+    // cout << "x: " << x.size() << " css: " << css->getDimension()
+    //      << " rvcs: " << rvcs->getDimension() << endl;
+    assert(x.size() == css->getDimension() + rvcs->getDimension() + 1);
+
+    int xpos = 0;
+
+    // Read the state space
+    for(size_t i=0; i < css->getSubspaceCount(); i++) {
+        auto subspace(css->getSubspace(i));
+
+        // Choose appropriate copy code based on subspace type
+        size_t n;
+        switch (subspace->getType()) {
+          case ob::STATE_SPACE_REAL_VECTOR:
+            n = subspace->as<ob::RealVectorStateSpace>()->getDimension();
+            for(size_t j=0; j < n; j++) {
+                (*state)[i]->as<ob::RealVectorStateSpace::StateType>()
+                    ->values[j] = x[xpos];
+                xpos++;
+            }
+            break;
+
+          case ob::STATE_SPACE_SO2:
+            (*state)[i]->as<ob::SO2StateSpace::StateType>()->value = x[xpos];
+            xpos++;
+            break;
+
+          case ob::STATE_SPACE_SO3:
+            MujocoStatePropagator::copySO3State(
+                x.data() + xpos,
+                (*state)[i]->as<ob::SO3StateSpace::StateType>());
+            xpos += 4;
+            break;
+
+          case ob::STATE_SPACE_SE3:
+            MujocoStatePropagator::copySE3State(
+                x.data() + xpos,
+                (*state)[i]->as<ob::SE3StateSpace::StateType>());
+            xpos += 7;
+            break;
+
+          default:
+            throw invalid_argument("Unhandled subspace type.");
+            break;
+        }
+    }
+
+    // Read the control space
+    for(size_t i=0; i < rvcs->getDimension(); i++) {
+        control->values[i] = x[xpos];
+        xpos++;
+    }
+
+    // Read the duration
+    duration = x[xpos];
+    xpos++;
+
+    assert(xpos == x.size());
+}
+
+
 shared_ptr<oc::SpaceInformation>
 MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
     int control_dim = m->nu;
