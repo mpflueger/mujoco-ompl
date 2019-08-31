@@ -19,9 +19,10 @@ using namespace std;
 
 
 int main(int argc, char** argv) {
+    string xml_filename = "";
     string prob_config_filename = "";
     if (argc >= 2) {
-        string xml_filename = argv[1];
+        xml_filename = argv[1];
         prob_config_filename = argv[2];
     } else {
         cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
@@ -60,7 +61,6 @@ int main(int argc, char** argv) {
     // Get xml file name
     // TODO: make this more modern (argparsing, regex)
     //   could use boost.program_options
-    string xml_filename = argv[1];
     if (xml_filename.find(".xml") == string::npos) {
         cerr << "XML model file is required" << endl;
         return -1;
