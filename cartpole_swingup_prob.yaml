@@ -1,0 +1,5 @@
+# format: [slider pos, pole angle (0 up), slider vel, pole vel]
+# note: angles in radians, as per internal ompl representations
+# problem: swing up pole
+start: [0, 3.14, 0, 0]
+goal: [0, 0, 0, 0]

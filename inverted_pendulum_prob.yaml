@@ -1,0 +1,5 @@
+# format: [slider pos, pole angle (0 up), slider vel, pole vel]
+# note: angles in radians, as per internal ompl representations
+# problem: slide to the side without losing the pole
+start: [-0.2, 0, 0, 0]
+goal: [0.2, 0, 0, 0]

@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 find_package(Eigen3 REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Threads REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 add_library(mujoco SHARED IMPORTED)
 set_target_properties(mujoco PROPERTIES
@@ -18,3 +19,4 @@ target_link_libraries(plan ompl)
 target_link_libraries(plan Eigen3::Eigen)
 target_link_libraries(plan mujoco)
 target_link_libraries(plan Threads::Threads)
+target_link_libraries(plan yaml-cpp)
