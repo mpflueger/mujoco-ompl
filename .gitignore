@@ -6,4 +6,5 @@ cmake_install.cmake
 Makefile
 
 plan
+*.out
 
