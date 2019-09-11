@@ -22,7 +22,7 @@ make
 ```
 
 ## Run
-MacOS requires to include the mujoco bin directory in the the DYLD_LIBRARY_PATH:
+MacOS requires to include the mujoco bin directory in the DYLD_LIBRARY_PATH:
 ```
 DYLD_LIBRARY_PATH=/Users/$USER/.mujoco/mujoco200/bin
 ```
