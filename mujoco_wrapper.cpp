@@ -1,6 +1,7 @@
 #include <ompl/base/StateSpace.h>
 
 #include "mujoco_wrapper.h"
+#include "compound_state_projector.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
@@ -260,6 +261,16 @@ MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
         }
     }
     c_space->setBounds(c_bounds);
+
+    //////////////////////////////////////////
+    // Set a default projection evaluator
+    // auto proj_eval(
+    //     make_shared<ompl::base::RealVectorRandomLinearProjectionEvaluator>(
+    //         space, proj_dim));
+    // auto proj_eval(make_shared<CompoundStateProjector>(space.get()));
+    auto proj_eval = CompoundStateProjector::makeCompoundStateProjector(
+        space.get());
+    space->registerDefaultProjection(proj_eval);
 
     //////////////////////////////////////////
     // Combine into the SpaceInformation

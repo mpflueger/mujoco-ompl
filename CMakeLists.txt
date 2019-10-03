@@ -43,14 +43,22 @@ endif()
 
 include_directories(${OMPL_INCLUDE_DIRS})
 
-add_executable(plan plan.cpp mujoco_wrapper.h mujoco_wrapper.cpp)
+add_executable(plan
+    plan.cpp
+    mujoco_wrapper.h
+    mujoco_wrapper.cpp
+    compound_state_projector.h)
 target_link_libraries(plan ${OMPL_LIBRARIES})
 target_link_libraries(plan Eigen3::Eigen)
 target_link_libraries(plan mujoco-nogl)
 target_link_libraries(plan Threads::Threads)
 target_link_libraries(plan yaml-cpp)
 
-add_executable(render_plan render_plan.cpp mujoco_wrapper.h mujoco_wrapper.cpp)
+add_executable(render_plan
+    render_plan.cpp
+    mujoco_wrapper.h
+    mujoco_wrapper.cpp
+    compound_state_projector.h)
 target_link_libraries(render_plan ${OMPL_LIBRARIES})
 target_link_libraries(render_plan Eigen3::Eigen)
 target_link_libraries(render_plan mujoco)

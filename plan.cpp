@@ -8,6 +8,9 @@
 #include <string>
 
 #include <ompl/control/SimpleSetup.h>
+#include <ompl/control/planners/est/EST.h>
+#include <ompl/control/planners/kpiece/KPIECE1.h>
+#include <ompl/control/planners/pdst/PDST.h>
 #include <ompl/control/planners/sst/SST.h>
 #include "yaml-cpp/yaml.h"
 
@@ -21,7 +24,7 @@ using namespace std;
 int main(int argc, char** argv) {
     string xml_filename = "";
     string prob_config_filename = "";
-    if (argc >= 2) {
+    if (argc >= 3) {
         xml_filename = argv[1];
         prob_config_filename = argv[2];
     } else {
@@ -32,7 +35,7 @@ int main(int argc, char** argv) {
 
     // Optional time limit
     double timelimit = 1.0;
-    if (argc >= 3) {
+    if (argc >= 4) {
         stringstream ss;
         ss << argv[3];
         ss >> timelimit;
@@ -84,10 +87,24 @@ int main(int argc, char** argv) {
     auto mj_state_prop(make_shared<MujocoStatePropagator>(si, mj));
     si->setStatePropagator(mj_state_prop);
 
-    // Create a SimpleSetup object with custom planner
+    // Create some candidate planners
     auto sst_planner(make_shared<oc::SST>(si));
+    auto pdst_planner(make_shared<oc::PDST>(si));
+    auto est_planner(make_shared<oc::EST>(si));
+    auto kpiece_planner(make_shared<oc::KPIECE1>(si));
+
+    // Create a SimpleSetup object
     oc::SimpleSetup ss(si);
+
+    // TODO: change the optimization objective?
+    // auto opt_obj(make_shared<ob::OptimizationObjective>(si));
+    // ss.setOptimizationObjective(opt_obj);
+
     ss.setPlanner(sst_planner);
+    // ss.setPlanner(pdst_planner);
+    // ss.setPlanner(est_planner);
+    // est_planner->setup();
+    // ss.setPlanner(kpiece_planner);
 
     // Set start and goal states
     ob::ScopedState<> start_ss(ss.getStateSpace());
@@ -98,13 +115,14 @@ int main(int argc, char** argv) {
     for(int i=0; i < goal_vec.size(); i++) {
         goal_ss[i] = goal_vec[i];
     }
-    ss.setStartAndGoalStates(start_ss, goal_ss);
+    double threshold = 0.1;
+    ss.setStartAndGoalStates(start_ss, goal_ss, threshold);
 
     // Call the planner
     ob::PlannerStatus solved = ss.solve(timelimit);
 
     if (solved) {
-        cout << "Found Solution!" << endl;
+        cout << "Found Solution with status: " << solved.asString() << endl;
         //ss.getSolutionPath().print(cout);
 
         // Write solution to file
