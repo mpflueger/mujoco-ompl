@@ -10,6 +10,8 @@
 
 #include "mujoco_wrapper.h"
 
+namespace MjOmpl {
+
 /// Read a vectorized OMPL planning state back into data structures
 /// Note: state and control must be pre-allocated from the space info
 void readOmplState(
@@ -102,3 +104,5 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
     mutable std::shared_ptr<MuJoCo> mj;
     mutable std::mutex mj_lock;
 };
+
+} // MjOmpl namespace

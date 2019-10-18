@@ -96,8 +96,8 @@ int main(int argc, char** argv) {
     }
 
     // Setup OMPL environment
-    auto si = createSpaceInformation(mj->m);
-    auto mj_state_prop(make_shared<MujocoStatePropagator>(si, mj));
+    auto si = MjOmpl::createSpaceInformation(mj->m);
+    auto mj_state_prop(make_shared<MjOmpl::MujocoStatePropagator>(si, mj));
     si->setStatePropagator(mj_state_prop);
 
     // Create a SimpleSetup object

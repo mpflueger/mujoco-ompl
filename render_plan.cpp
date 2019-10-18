@@ -99,29 +99,29 @@ int main(int argc, char** argv) {
     auto plan = readPlan(plan_file);
     plan_file.close();
 
-    auto si = createSpaceInformation(mj->m);
+    auto si = MjOmpl::createSpaceInformation(mj->m);
 
     // Initialize the simulation state
     auto state = si->allocState();
     auto control = si->allocControl();
     double duration = 0;
-    readOmplState(plan[0],
+    MjOmpl::readOmplState(plan[0],
                   si.get(),
                   state->as<ob::CompoundState>(),
                   control->as<oc::RealVectorControlSpace::ControlType>(),
                   duration);
-    copyOmplStateToMujoco(
+    MjOmpl::copyOmplStateToMujoco(
         state->as<ob::CompoundState>(), si.get(), mj->m, mj->d);
 
     // Start stepping and rendering
     for(size_t i=1; i < plan.size(); i++) {
         // realOmplState(plan[i], si, state, control, duration);
-        readOmplState(plan[i],
+        MjOmpl::readOmplState(plan[i],
                       si.get(),
                       state->as<ob::CompoundState>(),
                       control->as<oc::RealVectorControlSpace::ControlType>(),
                       duration);
-        copyOmplControlToMujoco(
+        MjOmpl::copyOmplControlToMujoco(
             control->as<oc::RealVectorControlSpace::ControlType>(),
             si.get(), mj->m, mj->d);
 

@@ -9,6 +9,8 @@ namespace ob = ompl::base;
 namespace oc = ompl::control;
 using namespace std;
 
+namespace MjOmpl {
+
 void readOmplState(
         const vector<double>& x,
         const oc::SpaceInformation* si,
@@ -506,3 +508,5 @@ void MujocoStatePropagator::propagate( const ob::State* state,
 
     mj_lock.unlock();
 }
+
+} // MjOmpl namespace
