@@ -19,6 +19,50 @@ void readOmplState(
     ompl::control::RealVectorControlSpace::ControlType* control,
     double& duration);
 
+std::shared_ptr<ompl::control::SpaceInformation>
+createSpaceInformation(const mjModel* m);
+
+std::shared_ptr<ompl::base::SpaceInformation>
+createSpaceInformationKinomatic(const mjModel* m);
+
+void copyOmplStateToMujoco(
+    const ompl::base::CompoundState* state,
+    const ompl::control::SpaceInformation* si,
+    const mjModel* m,
+    mjData* d);
+
+void copyMujocoStateToOmpl(
+    const mjModel* m,
+    const mjData* d,
+    const ompl::control::SpaceInformation* si,
+    ompl::base::CompoundState* state);
+
+void copyOmplControlToMujoco(
+    const ompl::control::RealVectorControlSpace::ControlType* control,
+    const ompl::control::SpaceInformation* si,
+    const mjModel* m,
+    mjData* d);
+
+/// Copy SO3State to double array with no bounds checks
+void copySO3State(
+    const ompl::base::SO3StateSpace::StateType* state,
+    double* data);
+
+/// Copy double array to SO3 state with no bounds checks
+void copySO3State(
+    const double* data,
+    ompl::base::SO3StateSpace::StateType* state);
+
+/// Copy SE3State to double array with no bounds checks
+void copySE3State(
+    const ompl::base::SE3StateSpace::StateType* state,
+    double* data);
+
+/// Copy double array to SE3 state with no bounds checks
+void copySE3State(
+    const double* data,
+    ompl::base::SE3StateSpace::StateType* state);
+
 
 class MujocoStatePropagator : public ompl::control::StatePropagator {
   public:
@@ -29,53 +73,9 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
               mj(mj) {
     } 
 
-    static std::shared_ptr<ompl::control::SpaceInformation>
-    createSpaceInformation(const mjModel* m);
-
-    static std::shared_ptr<ompl::base::SpaceInformation>
-    createSpaceInformationKinomatic(const mjModel* m);
-
     const ompl::control::SpaceInformation* getSpaceInformation() const {
         return si_;
     }
-
-    static void copyOmplStateToMujoco(
-        const ompl::base::CompoundState* state,
-        const ompl::control::SpaceInformation* si,
-        const mjModel* m,
-        mjData* d);
-
-    static void copyMujocoStateToOmpl(
-        const mjModel* m,
-        const mjData* d,
-        const ompl::control::SpaceInformation* si,
-        ompl::base::CompoundState* state);
-
-    static void copyOmplControlToMujoco(
-        const ompl::control::RealVectorControlSpace::ControlType* control,
-        const ompl::control::SpaceInformation* si,
-        const mjModel* m,
-        mjData* d);
-
-    /// Copy SO3State to double array with no bounds checks
-    static void copySO3State(
-        const ompl::base::SO3StateSpace::StateType* state,
-        double* data);
-
-    /// Copy double array to SO3 state with no bounds checks
-    static void copySO3State(
-        const double* data,
-        ompl::base::SO3StateSpace::StateType* state);
-
-    /// Copy SE3State to double array with no bounds checks
-    static void copySE3State(
-        const ompl::base::SE3StateSpace::StateType* state,
-        double* data);
-
-    /// Copy double array to SE3 state with no bounds checks
-    static void copySE3State(
-        const double* data,
-        ompl::base::SE3StateSpace::StateType* state);
 
     // To override this function from oc::StatePropagator, this has to be a
     // const function, but we need to modify the mjModel and mjData objects

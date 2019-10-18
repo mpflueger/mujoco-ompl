@@ -51,14 +51,14 @@ void readOmplState(
             break;
 
           case ob::STATE_SPACE_SO3:
-            MujocoStatePropagator::copySO3State(
+            copySO3State(
                 x.data() + xpos,
                 (*state)[i]->as<ob::SO3StateSpace::StateType>());
             xpos += 4;
             break;
 
           case ob::STATE_SPACE_SE3:
-            MujocoStatePropagator::copySE3State(
+            copySE3State(
                 x.data() + xpos,
                 (*state)[i]->as<ob::SE3StateSpace::StateType>());
             xpos += 7;
@@ -189,8 +189,7 @@ shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
 }
 
 
-shared_ptr<oc::SpaceInformation>
-MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
+shared_ptr<oc::SpaceInformation> createSpaceInformation(const mjModel* m) {
     auto space = makeCompoundStateSpace(m, true);
 
     ////////////////////////////////
@@ -229,8 +228,9 @@ MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
 }
 
 
-shared_ptr<ob::SpaceInformation>
-MujocoStatePropagator::createSpaceInformationKinomatic(const mjModel* m) {
+shared_ptr<ob::SpaceInformation> createSpaceInformationKinomatic(
+    const mjModel* m)
+{
 
     auto space = makeCompoundStateSpace(m, false);
 
@@ -247,7 +247,7 @@ MujocoStatePropagator::createSpaceInformationKinomatic(const mjModel* m) {
 }
 
 
-void MujocoStatePropagator::copyOmplStateToMujoco(
+void copyOmplStateToMujoco(
         const ob::CompoundState* state,
         const oc::SpaceInformation* si,
         const mjModel* m,
@@ -339,7 +339,7 @@ void MujocoStatePropagator::copyOmplStateToMujoco(
 }
 
 
-void MujocoStatePropagator::copyMujocoStateToOmpl(
+void copyMujocoStateToOmpl(
         const mjModel* m,
         const mjData* d,
         const oc::SpaceInformation* si,
@@ -426,7 +426,7 @@ void MujocoStatePropagator::copyMujocoStateToOmpl(
 }
 
 
-void MujocoStatePropagator::copyOmplControlToMujoco(
+void copyOmplControlToMujoco(
         const oc::RealVectorControlSpace::ControlType* control,
         const oc::SpaceInformation* si,
         const mjModel* m,
@@ -444,7 +444,7 @@ void MujocoStatePropagator::copyOmplControlToMujoco(
 }
 
 
-void MujocoStatePropagator::copySO3State(
+void copySO3State(
         const ob::SO3StateSpace::StateType* state,
         double* data) {
     data[0] = state->w;
@@ -454,7 +454,7 @@ void MujocoStatePropagator::copySO3State(
 }
 
 
-void MujocoStatePropagator::copySO3State(
+void copySO3State(
         const double* data,
         ob::SO3StateSpace::StateType* state) {
     state->w = data[0];
@@ -464,7 +464,7 @@ void MujocoStatePropagator::copySO3State(
 }
 
 
-void MujocoStatePropagator::copySE3State(
+void copySE3State(
         const ob::SE3StateSpace::StateType* state,
         double* data) {
     data[0] = state->getX();
@@ -474,7 +474,7 @@ void MujocoStatePropagator::copySE3State(
 }
 
 
-void MujocoStatePropagator::copySE3State(
+void copySE3State(
         const double* data,
         ob::SE3StateSpace::StateType* state) {
     state->setX(data[0]);

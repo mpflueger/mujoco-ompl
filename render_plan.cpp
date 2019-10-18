@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
     auto plan = readPlan(plan_file);
     plan_file.close();
 
-    auto si = MujocoStatePropagator::createSpaceInformation(mj->m);
+    auto si = createSpaceInformation(mj->m);
 
     // Initialize the simulation state
     auto state = si->allocState();
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
                   state->as<ob::CompoundState>(),
                   control->as<oc::RealVectorControlSpace::ControlType>(),
                   duration);
-    MujocoStatePropagator::copyOmplStateToMujoco(
+    copyOmplStateToMujoco(
         state->as<ob::CompoundState>(), si.get(), mj->m, mj->d);
 
     // Start stepping and rendering
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
                       state->as<ob::CompoundState>(),
                       control->as<oc::RealVectorControlSpace::ControlType>(),
                       duration);
-        MujocoStatePropagator::copyOmplControlToMujoco(
+        copyOmplControlToMujoco(
             control->as<oc::RealVectorControlSpace::ControlType>(),
             si.get(), mj->m, mj->d);
 
