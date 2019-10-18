@@ -1,3 +1,9 @@
+mujoco_config: "cartpole_swingup.xml"
+
+planner: sst
+sst_selection_radius: 0.02 #adjust
+sst_pruning_radius: 0.01 #adjust
+
 # format: [slider pos, pole angle (0 up), slider vel, pole vel]
 # note: angles in radians, as per internal ompl representations
 # problem: swing up pole

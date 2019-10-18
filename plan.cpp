@@ -24,20 +24,21 @@ using namespace std;
 int main(int argc, char** argv) {
     string xml_filename = "";
     string prob_config_filename = "";
-    if (argc >= 3) {
-        xml_filename = argv[1];
-        prob_config_filename = argv[2];
+    if (argc >= 2) {
+        // xml_filename = argv[1];
+        prob_config_filename = argv[1];
     } else {
-        cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
+        //cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
+        cerr << "Format: plan <yaml problem spec> [time limit]"
              << endl;
         return -1;
     }
 
     // Optional time limit
     double timelimit = 1.0;
-    if (argc >= 4) {
+    if (argc >= 3) {
         stringstream ss;
-        ss << argv[3];
+        ss << argv[2];
         ss >> timelimit;
     }
 
@@ -45,15 +46,26 @@ int main(int argc, char** argv) {
     //   This should contain instructions on how to setup the planning problem
     vector<double> start_vec;
     vector<double> goal_vec;
+    string planner = "";
+    double sst_selection_radius = -1.0;
+    double sst_pruning_radius = -1.0;
     if (prob_config_filename != "") {
         YAML::Node node = YAML::LoadFile(prob_config_filename);
 
         // Copy variables
+        xml_filename = node["mujoco_config"].as<string>();
+
         if (node["start"]) {
             start_vec = node["start"].as<vector<double> >();
         }
         if (node["goal"]) {
             goal_vec = node["goal"].as<vector<double> >();
+        }
+
+        planner = node["planner"].as<string>();
+        if (planner == "sst") {
+            sst_selection_radius = node["sst_selection_radius"].as<double>();
+            sst_pruning_radius = node["sst_pruning_radius"].as<double>();
         }
     }
 
@@ -87,24 +99,37 @@ int main(int argc, char** argv) {
     auto mj_state_prop(make_shared<MujocoStatePropagator>(si, mj));
     si->setStatePropagator(mj_state_prop);
 
+    // Create a SimpleSetup object
+    oc::SimpleSetup ss(si);
+
     // Create some candidate planners
     auto sst_planner(make_shared<oc::SST>(si));
     auto pdst_planner(make_shared<oc::PDST>(si));
     auto est_planner(make_shared<oc::EST>(si));
     auto kpiece_planner(make_shared<oc::KPIECE1>(si));
 
-    // Create a SimpleSetup object
-    oc::SimpleSetup ss(si);
-
     // TODO: change the optimization objective?
     // auto opt_obj(make_shared<ob::OptimizationObjective>(si));
     // ss.setOptimizationObjective(opt_obj);
 
-    ss.setPlanner(sst_planner);
-    // ss.setPlanner(pdst_planner);
-    // ss.setPlanner(est_planner);
-    // est_planner->setup();
-    // ss.setPlanner(kpiece_planner);
+    if (planner == "sst") {
+        sst_planner->setSelectionRadius(sst_selection_radius); // default 0.2
+        sst_planner->setPruningRadius(sst_pruning_radius); // default 0.1
+        ss.setPlanner(sst_planner);
+
+        cout << "Using SST planner with selection radius ["
+             << sst_selection_radius
+             << "] and pruning radius ["
+             << sst_pruning_radius
+             << "]" << endl;
+    } else if (planner == "pdst") {
+        ss.setPlanner(pdst_planner);
+    } else if (planner == "est") {
+        ss.setPlanner(est_planner);
+        est_planner->setup();
+    } else if (planner == "kpiece") {
+        ss.setPlanner(kpiece_planner);
+    }
 
     // Set start and goal states
     ob::ScopedState<> start_ss(ss.getStateSpace());
