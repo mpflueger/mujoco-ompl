@@ -10,6 +10,7 @@ find_package(Threads REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(Boost 1.58 QUIET REQUIRED COMPONENTS serialization filesystem system program_options)
 
 add_library(mujoco-nogl SHARED IMPORTED)
 add_library(mujoco SHARED IMPORTED)
@@ -41,7 +42,7 @@ elseif(UNIX)
 	  INTERFACE_INCLUDE_DIRECTORIES "$ENV{HOME}/.mujoco/mujoco200/include" )
 endif()
 
-include_directories(${OMPL_INCLUDE_DIRS})
+include_directories(${OMPL_INCLUDE_DIRS}, ${Boost_INCLUDE_DIR})
 
 add_executable(plan
     plan.cpp
