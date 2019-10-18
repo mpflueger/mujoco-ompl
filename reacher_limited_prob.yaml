@@ -1,0 +1,20 @@
+mujoco_config: "reacher_limited.xml"
+
+planner: sst
+sst_selection_radius: 0.005
+sst_pruning_radius: 0.002
+
+# format: [joint0, joint1, target_x, target_y,
+#          joint0_vel, joint1_vel, target_x_vel, target_y_vel]
+# note: angles in radians, as per internal ompl representations
+start: [0, 0, 0.1, 0.1, 0, 0, 0, 0]
+start_rand: [
+  [-3.14, 3.14],
+  [-3, 3],
+  [0.1, 0.1],
+  [0.1, 0.1],
+  [-0.1, 0.1],
+  [-0.1, 0.1],
+  [0,0],
+  [0,0]]
+goal: [0, 1.57, 0.1, 0.1, 0, 0, 0, 0]
