@@ -66,3 +66,15 @@ target_link_libraries(render_plan Threads::Threads)
 target_link_libraries(render_plan glfw3)
 target_link_libraries(render_plan OpenGL::GL)
 target_link_libraries(render_plan GLEW::GLEW)
+
+add_executable(smooth_plan
+    smooth_plan.cpp
+    mujoco_wrapper.h
+    mujoco_wrapper.cpp
+    compound_state_projector.h)
+target_link_libraries(smooth_plan ${OMPL_LIBRARIES})
+target_link_libraries(smooth_plan Eigen3::Eigen)
+target_link_libraries(smooth_plan mujoco-nogl)
+target_link_libraries(smooth_plan Threads::Threads)
+target_link_libraries(smooth_plan yaml-cpp)
+

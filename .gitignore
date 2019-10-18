@@ -7,5 +7,7 @@ Makefile
 
 plan
 render_plan
+smooth_plan
 *.out
+*.csv
 
