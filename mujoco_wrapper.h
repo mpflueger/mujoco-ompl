@@ -41,6 +41,7 @@ struct MuJoCoState {
     std::vector<mjtNum> qpos;
     std::vector<mjtNum> qvel;
     std::vector<mjtNum> act;
+    std::vector<mjtNum> ctrl;
 };
 
 std::ostream& operator<<(std::ostream& os, const MuJoCoState& s);
@@ -155,6 +156,10 @@ class MuJoCo {
             if (i >= s.act.size()) break;
             d->act[i] = s.act[i];    
         }
+        for(size_t i=0; i < m->nu; i++) {
+            if (i >= s.ctrl.size()) break;
+            d->ctrl[i] = s.ctrl[i];    
+        }
     }
 
     MuJoCoState getState() const {
@@ -168,6 +173,9 @@ class MuJoCo {
         }
         for(size_t i=0; i < m->na; i++) {
             s.act.push_back(d->act[i]);
+        }
+        for(size_t i=0; i < m->nu; i++) {
+            s.ctrl.push_back(d->ctrl[i]);
         }
         return s;
     }

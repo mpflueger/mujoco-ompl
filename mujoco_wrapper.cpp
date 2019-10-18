@@ -42,6 +42,10 @@ std::ostream& operator<<(std::ostream& os, const MuJoCoState& s) {
     for(auto const& i : s.act) {
         os << i << ", ";
     }
+    os << "] ctrl: [";
+    for(auto const& i : s.ctrl) {
+        os << i << ", ";
+    }
     os << "]}";
     return os;
 }
