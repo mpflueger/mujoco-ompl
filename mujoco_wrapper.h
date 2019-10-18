@@ -228,6 +228,9 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
     static std::shared_ptr<ompl::control::SpaceInformation>
     createSpaceInformation(const mjModel* m);
 
+    static std::shared_ptr<ompl::base::SpaceInformation>
+    createSpaceInformationKinomatic(const mjModel* m);
+
     const ompl::control::SpaceInformation* getSpaceInformation() const {
         return si_;
     }

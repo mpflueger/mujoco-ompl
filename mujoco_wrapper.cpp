@@ -150,16 +150,16 @@ void readOmplState(
 }
 
 
-shared_ptr<oc::SpaceInformation>
-MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
-    int control_dim = m->nu;
-
+shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
+    const mjModel* m,
+    bool include_velocity = true)
+{
     //////////////////////////////////////////////
-    // Create the state space (including velocity)
+    // Create the state space (optionally including velocity)
+    auto space(make_shared<ob::CompoundStateSpace>());
 
     // Iterate over joints
     auto joints = getJointInfo(m);
-    auto space(make_shared<ob::CompoundStateSpace>());
     // Add a subspace matching the topology of each joint
     vector<shared_ptr<ob::StateSpace> > vel_spaces;
     int next_qpos = 0;
@@ -239,18 +239,29 @@ MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
         throw invalid_argument("Total joint dimensions are not equal to nq");
     }
 
-    // Add on all the velocity spaces
-    for(const auto& s : vel_spaces) {
-        // Apparently OMPL needs bounds
-        // 350 m/s is just a bit supersonic
-        // 50 m/s is pretty fast for most robot parts
-        s->as<ob::RealVectorStateSpace>()->setBounds(-50, 50);
-        space->addSubspace(s, 1.0);
+    if (include_velocity) {
+        // Add on all the velocity spaces
+        for(const auto& s : vel_spaces) {
+            // Apparently OMPL needs bounds
+            // 350 m/s is just a bit supersonic
+            // 50 m/s is pretty fast for most robot parts
+            s->as<ob::RealVectorStateSpace>()->setBounds(-50, 50);
+            space->addSubspace(s, 1.0);
+        }
     }
     space->lock();  // We are done
 
+    return space;
+}
+
+
+shared_ptr<oc::SpaceInformation>
+MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
+    auto space = makeCompoundStateSpace(m, true);
+
     ////////////////////////////////
     // Create the control space
+    int control_dim = m->nu;
     auto c_space(make_shared<oc::RealVectorControlSpace>(space, control_dim));
     // Set bounds
     ob::RealVectorBounds c_bounds(control_dim);
@@ -280,6 +291,24 @@ MujocoStatePropagator::createSpaceInformation(const mjModel* m) {
     // Combine into the SpaceInformation
     auto si(make_shared<oc::SpaceInformation>(space, c_space));
     si->setPropagationStepSize(m->opt.timestep);
+    return si;
+}
+
+
+shared_ptr<ob::SpaceInformation>
+MujocoStatePropagator::createSpaceInformationKinomatic(const mjModel* m) {
+
+    auto space = makeCompoundStateSpace(m, false);
+
+    //////////////////////////////////////////
+    // Set a default projection evaluator
+    auto proj_eval = CompoundStateProjector::makeCompoundStateProjector(
+        space.get());
+    space->registerDefaultProjection(proj_eval);
+
+    //////////////////////////////////////////
+    // Combine into the SpaceInformation
+    auto si(make_shared<ob::SpaceInformation>(space));
     return si;
 }
 
