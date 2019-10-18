@@ -48,6 +48,8 @@ add_executable(plan
     plan.cpp
     mujoco_wrapper.h
     mujoco_wrapper.cpp
+    mujoco_ompl_interface.h
+    mujoco_ompl_interface.cpp
     compound_state_projector.h)
 target_link_libraries(plan ${OMPL_LIBRARIES})
 target_link_libraries(plan Eigen3::Eigen)
@@ -59,6 +61,8 @@ add_executable(render_plan
     render_plan.cpp
     mujoco_wrapper.h
     mujoco_wrapper.cpp
+    mujoco_ompl_interface.h
+    mujoco_ompl_interface.cpp
     compound_state_projector.h)
 target_link_libraries(render_plan ${OMPL_LIBRARIES})
 target_link_libraries(render_plan Eigen3::Eigen)
@@ -72,6 +76,8 @@ add_executable(smooth_plan
     smooth_plan.cpp
     mujoco_wrapper.h
     mujoco_wrapper.cpp
+    mujoco_ompl_interface.h
+    mujoco_ompl_interface.cpp
     compound_state_projector.h)
 target_link_libraries(smooth_plan ${OMPL_LIBRARIES})
 target_link_libraries(smooth_plan Eigen3::Eigen)

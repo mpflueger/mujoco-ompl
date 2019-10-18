@@ -6,6 +6,7 @@
 #include <string>
 
 #include "mujoco_wrapper.h"
+#include "mujoco_ompl_interface.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
