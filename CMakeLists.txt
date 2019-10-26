@@ -70,6 +70,28 @@ target_link_libraries(render_plan glfw3)
 target_link_libraries(render_plan OpenGL::GL)
 target_link_libraries(render_plan GLEW::GLEW)
 
+add_executable(plan_kinematic plan_kinematic.cpp
+		src/mujoco_wrapper.cpp
+		src/mujoco_ompl_interface.cpp
+		)
+target_link_libraries(plan_kinematic ${OMPL_LIBRARIES})
+target_link_libraries(plan_kinematic Eigen3::Eigen)
+target_link_libraries(plan_kinematic mujoco-nogl)
+target_link_libraries(plan_kinematic Threads::Threads)
+target_link_libraries(plan_kinematic yaml-cpp)
+
+add_executable(render_plan_kinematic render_plan_kinematic.cpp
+		src/mujoco_wrapper.cpp
+		src/mujoco_ompl_interface.cpp
+		)
+target_link_libraries(render_plan_kinematic ${OMPL_LIBRARIES})
+target_link_libraries(render_plan_kinematic Eigen3::Eigen)
+target_link_libraries(render_plan_kinematic mujoco)
+target_link_libraries(render_plan_kinematic Threads::Threads)
+target_link_libraries(render_plan_kinematic glfw3)
+target_link_libraries(render_plan_kinematic OpenGL::GL)
+target_link_libraries(render_plan_kinematic GLEW::GLEW)
+
 add_executable(smooth_plan smooth_plan.cpp
 		src/mujoco_wrapper.cpp
 		src/mujoco_ompl_interface.cpp
@@ -80,13 +102,25 @@ target_link_libraries(smooth_plan mujoco-nogl)
 target_link_libraries(smooth_plan Threads::Threads)
 target_link_libraries(smooth_plan yaml-cpp)
 
+add_library(mujoco_ompl_nogl SHARED
+		src/mujoco_wrapper.cpp
+		src/mujoco_ompl_interface.cpp)
+target_include_directories(mujoco_ompl_nogl PUBLIC include)
+target_link_libraries(mujoco_ompl_nogl ${OMPL_LIBRARIES})
+target_link_libraries(mujoco_ompl_nogl Eigen3::Eigen)
+target_link_libraries(mujoco_ompl_nogl mujoco-nogl)
+target_link_libraries(mujoco_ompl_nogl Threads::Threads)
+target_link_libraries(mujoco_ompl_nogl yaml-cpp)
+
 add_library(mujoco_ompl SHARED
 		src/mujoco_wrapper.cpp
 		src/mujoco_ompl_interface.cpp)
 target_include_directories(mujoco_ompl PUBLIC include)
 target_link_libraries(mujoco_ompl ${OMPL_LIBRARIES})
 target_link_libraries(mujoco_ompl Eigen3::Eigen)
-target_link_libraries(mujoco_ompl mujoco-nogl)
+target_link_libraries(mujoco_ompl mujoco)
 target_link_libraries(mujoco_ompl Threads::Threads)
 target_link_libraries(mujoco_ompl yaml-cpp)
-
+target_link_libraries(mujoco_ompl glfw3)
+target_link_libraries(mujoco_ompl OpenGL::GL)
+target_link_libraries(mujoco_ompl GLEW::GLEW)

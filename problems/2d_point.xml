@@ -1,0 +1,25 @@
+<mujoco model="2d point">
+	<compiler inertiafromgeom="true"/>
+	<default>
+		<joint armature="0" damping="1" limited="true"/>
+		<geom contype="0" friction="1 0.1 0.1" rgba="0.7 0.7 0 1"/>
+		<tendon/>
+		<motor ctrlrange="-3 3"/>
+	</default>
+	<option gravity="0 0 -9.81" integrator="RK4" timestep="0.02"/>
+	<size nstack="3000"/>
+	<worldbody>
+		<body name="frame">
+			<geom type="box" pos="0 0 -2" size="1 0.01 1" contype="1" conaffinity="1" rgba="0.5 0.5 0.8 1"/>
+			<geom type="box" pos="0 0 2" size="1 0.01 1" contype="1" conaffinity="1" rgba="0.5 0.5 0.8 1"/>
+			<geom type="box" pos="2 0 0" size="1 0.01 3" contype="1" conaffinity="1" rgba="0.5 0.5 0.8 1"/>
+			<geom type="box" pos="-2 0 0" size="1 0.01 3" contype="1" conaffinity="1" rgba="0.5 0.5 0.8 1"/>
+		</body>
+		<body name="robot" pos="0 0 0">
+			<joint axis="0 0 1" name="joint0" pos="0 0 0" type="slide" limited="true" range="-1.5 1.5"/>
+			<joint axis="1 0 0" name="joint1" pos="0 0 0" type="slide" limited="true" range="-1.5 1.5"/>
+			<geom name="robot" pos="0 0 0" size="0.05" type="sphere" contype="1" conaffinity="1"/>
+		</body>
+		<geom name="obstacle" pos="0.0 0.0 0.0" rgba="0.1 0.9 0.9 1" size="0.1" type="sphere" contype="1" conaffinity="1"/>
+	</worldbody>
+</mujoco>

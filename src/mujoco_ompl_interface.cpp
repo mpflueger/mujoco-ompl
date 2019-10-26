@@ -85,6 +85,66 @@ void readOmplState(
     assert(xpos == x.size());
 }
 
+void readOmplStateKinematic(
+        const vector<double>& x,
+        const ob::SpaceInformation* si,
+        ob::CompoundState* state) {
+    // Vector format: [state]
+
+    assert(si->getStateSpace()->isCompound());
+    auto css(si->getStateSpace()->as<ob::CompoundStateSpace>());
+
+    // Make sure the data vector is the right size
+    // cout << "x: " << x.size() << " css: " << css->getDimension()
+    //      << " rvcs: " << rvcs->getDimension() << endl;
+    assert(x.size() == css->getDimension());
+
+    int xpos = 0;
+
+    // Read the state space
+    for(size_t i=0; i < css->getSubspaceCount(); i++) {
+        auto subspace(css->getSubspace(i));
+
+        // Choose appropriate copy code based on subspace type
+        size_t n;
+        switch (subspace->getType()) {
+            case ob::STATE_SPACE_REAL_VECTOR:
+                n = subspace->as<ob::RealVectorStateSpace>()->getDimension();
+                for(size_t j=0; j < n; j++) {
+                    (*state)[i]->as<ob::RealVectorStateSpace::StateType>()
+                            ->values[j] = x[xpos];
+                    xpos++;
+                }
+                break;
+
+            case ob::STATE_SPACE_SO2:
+                (*state)[i]->as<ob::SO2StateSpace::StateType>()->value = x[xpos];
+                xpos++;
+                break;
+
+            case ob::STATE_SPACE_SO3:
+                copySO3State(
+                        x.data() + xpos,
+                        (*state)[i]->as<ob::SO3StateSpace::StateType>());
+                xpos += 4;
+                break;
+
+            case ob::STATE_SPACE_SE3:
+                copySE3State(
+                        x.data() + xpos,
+                        (*state)[i]->as<ob::SE3StateSpace::StateType>());
+                xpos += 7;
+                break;
+
+            default:
+                throw invalid_argument("Unhandled subspace type.");
+                break;
+        }
+    }
+
+    assert(xpos == x.size());
+}
+
 
 shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
     const mjModel* m,
@@ -230,7 +290,7 @@ shared_ptr<oc::SpaceInformation> createSpaceInformation(const mjModel* m) {
 }
 
 
-shared_ptr<ob::SpaceInformation> createSpaceInformationKinomatic(
+shared_ptr<ob::SpaceInformation> createSpaceInformationKinematic(
     const mjModel* m)
 {
 
@@ -238,9 +298,10 @@ shared_ptr<ob::SpaceInformation> createSpaceInformationKinomatic(
 
     //////////////////////////////////////////
     // Set a default projection evaluator
-    auto proj_eval = CompoundStateProjector::makeCompoundStateProjector(
-        space.get());
-    space->registerDefaultProjection(proj_eval);
+    // TODO: this code leads to an error
+    //    auto proj_eval = CompoundStateProjector::makeCompoundStateProjector(
+    //        space.get());
+    //    space->registerDefaultProjection(proj_eval);
 
     //////////////////////////////////////////
     // Combine into the SpaceInformation
@@ -251,9 +312,10 @@ shared_ptr<ob::SpaceInformation> createSpaceInformationKinomatic(
 
 void copyOmplStateToMujoco(
         const ob::CompoundState* state,
-        const oc::SpaceInformation* si,
+        const ob::SpaceInformation* si,
         const mjModel* m,
-        mjData* d) {
+        mjData* d,
+        bool useVelocities) {
     // Iterate over subspaces to copy data from state to mjData
     // Copy position state to d->qpos
     // Copy velocity state to d->qvel
@@ -276,6 +338,11 @@ void copyOmplStateToMujoco(
             if (qpos_i < m->nq && (qpos_i + n) > m->nq) {
                 throw invalid_argument(
                     "RealVectorState does not align on qpos");
+            }
+
+            if (!useVelocities && qpos_i >= m->nq) {
+                throw invalid_argument(
+                        "RealVectorState does not align on qpos (useVelocities = true)");
             }
 
             // Copy vector
@@ -334,9 +401,14 @@ void copyOmplStateToMujoco(
         }
     }
 
-    if (!(qpos_i == m->nq && qvel_i == m->nv)) {
+    if (qpos_i != m->nq) {
         throw invalid_argument(
-            "Size of data copied did not match m->nq and m->nv");
+                "Size of data copied did not match m->nv");
+    }
+
+    if (useVelocities && (qvel_i != m->nv)) {
+        throw invalid_argument(
+                "Size of data copied did not match m->nq");
     }
 }
 
@@ -344,8 +416,9 @@ void copyOmplStateToMujoco(
 void copyMujocoStateToOmpl(
         const mjModel* m,
         const mjData* d,
-        const oc::SpaceInformation* si,
-        ob::CompoundState* state) {
+        const ob::SpaceInformation* si,
+        ob::CompoundState* state,
+        bool useVelocities) {
     // Iterate over subspaces and copy data from mjData to CompoundState
     assert(si->getStateSpace()->isCompound());
     auto css(si->getStateSpace()->as<ob::CompoundStateSpace>());
@@ -365,6 +438,11 @@ void copyMujocoStateToOmpl(
             if (qpos_i < m->nq && (qpos_i + n) > m->nq) {
                 throw invalid_argument(
                     "RealVectorState does not align on qpos");
+            }
+
+            if (!useVelocities && qpos_i >= m->nq) {
+                throw invalid_argument(
+                        "RealVectorState does not align on qpos (useVelocities = true)");
             }
 
             // Copy vector
@@ -421,9 +499,14 @@ void copyMujocoStateToOmpl(
         }
     }
 
-    if (!(qpos_i == m->nq && qvel_i == m->nv)) {
+    if (qpos_i != m->nq) {
         throw invalid_argument(
-            "Size of data copied did not match m->nq and m->nv");
+                "Size of data copied did not match m->nv");
+    }
+
+    if (useVelocities && (qvel_i != m->nv)) {
+        throw invalid_argument(
+                "Size of data copied did not match m->nq");
     }
 }
 
@@ -507,6 +590,15 @@ void MujocoStatePropagator::propagate( const ob::State* state,
     copyMujocoStateToOmpl(mj->m, mj->d, si_, result->as<ob::CompoundState>());
 
     mj_lock.unlock();
+}
+
+bool MujocoStateValidityChecker::isValid(const ompl::base::State *state) const {
+    mj_lock.lock();
+    copyOmplStateToMujoco(state->as<ob::CompoundState>(), si_, mj->m, mj->d, useVelocities);
+    mj_fwdPosition(mj->m, mj->d);
+    int ncon = mj->d->ncon;
+    mj_lock.unlock();
+    return ncon==0;
 }
 
 } // MjOmpl namespace
