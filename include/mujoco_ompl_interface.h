@@ -4,9 +4,12 @@
 
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/base/spaces/WrapperStateSpace.h>
+
 #include <ompl/control/StatePropagator.h>
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
+
 
 #include "mujoco_wrapper.h"
 
@@ -32,6 +35,21 @@ createSpaceInformation(const mjModel* m);
 
 std::shared_ptr<ompl::base::SpaceInformation>
 createSpaceInformationKinematic(const mjModel* m);
+
+std::shared_ptr<ompl::base::CompoundStateSpace> makeCompoundStateSpace(
+        const mjModel* m,
+        bool include_velocity = true);
+
+std::shared_ptr<ompl::base::RealVectorStateSpace> makeRealVectorStateSpace(
+        const mjModel* m,
+        bool include_velocity = true);
+
+void copyOmplStateToMujoco(
+        const ompl::base::RealVectorStateSpace::StateType*  state,
+        const ompl::base::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d,
+        bool useVelocities=true);
 
 void copyOmplStateToMujoco(
         const ompl::base::CompoundState* state,
@@ -128,6 +146,7 @@ class MujocoStateValidityChecker : public ompl::base::StateValidityChecker {
         mutable std::shared_ptr<MuJoCo> mj;
         mutable std::mutex mj_lock;
         bool useVelocities;
+
 };
 
 } // MjOmpl namespace

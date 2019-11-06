@@ -148,7 +148,7 @@ void readOmplStateKinematic(
 
 shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
     const mjModel* m,
-    bool include_velocity = true)
+    bool include_velocity)
 {
     //////////////////////////////////////////////
     // Create the state space (optionally including velocity)
@@ -249,6 +249,31 @@ shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
 
     return space;
 }
+
+std::shared_ptr<ompl::base::RealVectorStateSpace> makeRealVectorStateSpace(const mjModel *m, bool include_velocity) {
+    //////////////////////////////////////////////
+    auto joints = getJointInfo(m);
+
+    uint dim;
+    if (include_velocity) {
+        dim = 2 * joints.size();
+    } else {
+        dim = joints.size();
+    }
+
+    auto space(make_shared<ob::RealVectorStateSpace>(dim));
+
+    ob::RealVectorBounds bounds(dim);
+    int i = 0;
+    for(const auto& joint : joints) {
+        bounds.setLow(i, joint.range[0]);
+        bounds.setHigh(i, joint.range[1]);
+        i++;
+    }
+    space->setBounds(bounds);
+    return space;
+}
+
 
 
 shared_ptr<oc::SpaceInformation> createSpaceInformation(const mjModel* m) {
@@ -412,6 +437,26 @@ void copyOmplStateToMujoco(
     }
 }
 
+void copyOmplStateToMujoco(
+        const ob::RealVectorStateSpace::StateType* state,
+        const ob::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d,
+        bool useVelocities) {
+    if (useVelocities) {
+        for (size_t i=0; i<si->getStateDimension(); i++) {
+            if (i < si->getStateDimension() * 0.5 - 1) {
+                d->qpos[i] = state->values[i];
+            } else {
+                d->qvel[i] = state->values[i];
+            }
+        }
+    } else {
+        for (size_t i=0; i<si->getStateDimension(); i++) {
+            d->qpos[i] = state->values[i];
+        }
+    }
+}
 
 void copyMujocoStateToOmpl(
         const mjModel* m,
@@ -568,8 +613,7 @@ void copySE3State(
     copySO3State(data + 3, &state->rotation());
 }
 
-
-void MujocoStatePropagator::propagate( const ob::State* state,
+    void MujocoStatePropagator::propagate( const ob::State* state,
                                        const oc::Control* control,
                                        double duration,
                                        ob::State* result) const {
@@ -594,7 +638,13 @@ void MujocoStatePropagator::propagate( const ob::State* state,
 
 bool MujocoStateValidityChecker::isValid(const ompl::base::State *state) const {
     mj_lock.lock();
-    copyOmplStateToMujoco(state->as<ob::CompoundState>(), si_, mj->m, mj->d, useVelocities);
+    if (si_->getStateSpace()->isCompound()) {
+        copyOmplStateToMujoco(state->as<ob::CompoundState>(), si_, mj->m, mj->d, useVelocities);
+    } else {
+        copyOmplStateToMujoco(
+                state->as<ob::WrapperStateSpace::StateType>()->getState()->as<ob::RealVectorStateSpace::StateType>(),
+                si_, mj->m, mj->d, useVelocities);
+    }
     mj_fwdPosition(mj->m, mj->d);
     int ncon = mj->d->ncon;
     mj_lock.unlock();
