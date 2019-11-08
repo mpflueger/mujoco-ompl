@@ -4,9 +4,12 @@
 
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/base/spaces/WrapperStateSpace.h>
+
 #include <ompl/control/StatePropagator.h>
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
+
 
 #include "mujoco_wrapper.h"
 
@@ -21,23 +24,47 @@ void readOmplState(
     ompl::control::RealVectorControlSpace::ControlType* control,
     double& duration);
 
+void readOmplStateKinematic(
+        const std::vector<double>& x,
+        const ompl::base::SpaceInformation* si,
+        ompl::base::CompoundState* state);
+
+
 std::shared_ptr<ompl::control::SpaceInformation>
 createSpaceInformation(const mjModel* m);
 
 std::shared_ptr<ompl::base::SpaceInformation>
-createSpaceInformationKinomatic(const mjModel* m);
+createSpaceInformationKinematic(const mjModel* m);
+
+std::shared_ptr<ompl::base::CompoundStateSpace> makeCompoundStateSpace(
+        const mjModel* m,
+        bool include_velocity = true);
+
+std::shared_ptr<ompl::base::RealVectorStateSpace> makeRealVectorStateSpace(
+        const mjModel* m,
+        bool include_velocity = true);
 
 void copyOmplStateToMujoco(
-    const ompl::base::CompoundState* state,
-    const ompl::control::SpaceInformation* si,
-    const mjModel* m,
-    mjData* d);
+        const ompl::base::RealVectorStateSpace::StateType*  state,
+        const ompl::base::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d,
+        bool useVelocities=true);
+
+void copyOmplStateToMujoco(
+        const ompl::base::CompoundState* state,
+        const ompl::base::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d,
+        bool useVelocities=true);
 
 void copyMujocoStateToOmpl(
-    const mjModel* m,
-    const mjData* d,
-    const ompl::control::SpaceInformation* si,
-    ompl::base::CompoundState* state);
+        const mjModel* m,
+        const mjData* d,
+        const ompl::base::SpaceInformation* si,
+        ompl::base::CompoundState* state,
+        bool useVelocities=true);
+
 
 void copyOmplControlToMujoco(
     const ompl::control::RealVectorControlSpace::ControlType* control,
@@ -103,6 +130,23 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
     // propagate a const function and I don't want to reallocate them
     mutable std::shared_ptr<MuJoCo> mj;
     mutable std::mutex mj_lock;
+};
+
+
+class MujocoStateValidityChecker : public ompl::base::StateValidityChecker {
+    public:
+        MujocoStateValidityChecker(const ompl::base::SpaceInformationPtr &si, std::shared_ptr<MuJoCo> mj, bool useVelocities=true) :
+                ompl::base::StateValidityChecker(si), mj(mj), useVelocities(useVelocities)
+        {
+        }
+
+        bool isValid(const ompl::base::State *state) const;
+
+    private:
+        mutable std::shared_ptr<MuJoCo> mj;
+        mutable std::mutex mj_lock;
+        bool useVelocities;
+
 };
 
 } // MjOmpl namespace
