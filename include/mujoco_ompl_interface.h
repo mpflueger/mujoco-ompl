@@ -18,11 +18,11 @@ namespace MjOmpl {
 /// Read a vectorized OMPL planning state back into data structures
 /// Note: state and control must be pre-allocated from the space info
 void readOmplState(
-    const std::vector<double>& x,
-    const ompl::control::SpaceInformation* si,
-    ompl::base::CompoundState* state,
-    ompl::control::RealVectorControlSpace::ControlType* control,
-    double& duration);
+        const std::vector<double>& x,
+        const ompl::control::SpaceInformation* si,
+        ompl::base::CompoundState* state,
+        ompl::control::RealVectorControlSpace::ControlType* control,
+        double& duration);
 
 void readOmplStateKinematic(
         const std::vector<double>& x,
@@ -67,30 +67,30 @@ void copyMujocoStateToOmpl(
 
 
 void copyOmplControlToMujoco(
-    const ompl::control::RealVectorControlSpace::ControlType* control,
-    const ompl::control::SpaceInformation* si,
-    const mjModel* m,
-    mjData* d);
+        const ompl::control::RealVectorControlSpace::ControlType* control,
+        const ompl::control::SpaceInformation* si,
+        const mjModel* m,
+        mjData* d);
 
 /// Copy SO3State to double array with no bounds checks
 void copySO3State(
-    const ompl::base::SO3StateSpace::StateType* state,
-    double* data);
+        const ompl::base::SO3StateSpace::StateType* state,
+        double* data);
 
 /// Copy double array to SO3 state with no bounds checks
 void copySO3State(
-    const double* data,
-    ompl::base::SO3StateSpace::StateType* state);
+        const double* data,
+        ompl::base::SO3StateSpace::StateType* state);
 
 /// Copy SE3State to double array with no bounds checks
 void copySE3State(
-    const ompl::base::SE3StateSpace::StateType* state,
-    double* data);
+        const ompl::base::SE3StateSpace::StateType* state,
+        double* data);
 
 /// Copy double array to SE3 state with no bounds checks
 void copySE3State(
-    const double* data,
-    ompl::base::SE3StateSpace::StateType* state);
+        const double* data,
+        ompl::base::SE3StateSpace::StateType* state);
 
 
 class MujocoStatePropagator : public ompl::control::StatePropagator {
@@ -134,18 +134,23 @@ class MujocoStatePropagator : public ompl::control::StatePropagator {
 
 
 class MujocoStateValidityChecker : public ompl::base::StateValidityChecker {
-    public:
-        MujocoStateValidityChecker(const ompl::base::SpaceInformationPtr &si, std::shared_ptr<MuJoCo> mj, bool useVelocities=true) :
-                ompl::base::StateValidityChecker(si), mj(mj), useVelocities(useVelocities)
-        {
-        }
+  public:
+    MujocoStateValidityChecker(
+            const ompl::base::SpaceInformationPtr &si,
+            std::shared_ptr<MuJoCo> mj,
+            bool useVelocities=true)
+            : ompl::base::StateValidityChecker(si),
+              mj(mj),
+              useVelocities(useVelocities)
+    {
+    }
 
-        bool isValid(const ompl::base::State *state) const;
+    bool isValid(const ompl::base::State *state) const;
 
-    private:
-        mutable std::shared_ptr<MuJoCo> mj;
-        mutable std::mutex mj_lock;
-        bool useVelocities;
+  private:
+    mutable std::shared_ptr<MuJoCo> mj;
+    mutable std::mutex mj_lock;
+    bool useVelocities;
 
 };
 

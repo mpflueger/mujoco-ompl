@@ -250,7 +250,8 @@ shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
     return space;
 }
 
-std::shared_ptr<ompl::base::RealVectorStateSpace> makeRealVectorStateSpace(const mjModel *m, bool include_velocity) {
+std::shared_ptr<ompl::base::RealVectorStateSpace>
+makeRealVectorStateSpace(const mjModel *m, bool include_velocity) {
     //////////////////////////////////////////////
     auto joints = getJointInfo(m);
 
@@ -365,9 +366,11 @@ void copyOmplStateToMujoco(
                     "RealVectorState does not align on qpos");
             }
 
+            // TODO: what is this checking for?
             if (!useVelocities && qpos_i >= m->nq) {
                 throw invalid_argument(
-                        "RealVectorState does not align on qpos (useVelocities = true)");
+                    "RealVectorState does not align on qpos"
+                    " (useVelocities = false)");
             }
 
             // Copy vector
@@ -428,12 +431,12 @@ void copyOmplStateToMujoco(
 
     if (qpos_i != m->nq) {
         throw invalid_argument(
-                "Size of data copied did not match m->nv");
+                "Size of data copied did not match m->nq");
     }
 
     if (useVelocities && (qvel_i != m->nv)) {
         throw invalid_argument(
-                "Size of data copied did not match m->nq");
+                "Size of data copied did not match m->nv");
     }
 }
 
@@ -487,7 +490,8 @@ void copyMujocoStateToOmpl(
 
             if (!useVelocities && qpos_i >= m->nq) {
                 throw invalid_argument(
-                        "RealVectorState does not align on qpos (useVelocities = true)");
+                    "RealVectorState does not align on qpos"
+                    " (useVelocities = false)");
             }
 
             // Copy vector
@@ -546,12 +550,12 @@ void copyMujocoStateToOmpl(
 
     if (qpos_i != m->nq) {
         throw invalid_argument(
-                "Size of data copied did not match m->nv");
+                "Size of data copied did not match m->nq");
     }
 
     if (useVelocities && (qvel_i != m->nv)) {
         throw invalid_argument(
-                "Size of data copied did not match m->nq");
+                "Size of data copied did not match m->nv");
     }
 }
 
@@ -613,7 +617,7 @@ void copySE3State(
     copySO3State(data + 3, &state->rotation());
 }
 
-    void MujocoStatePropagator::propagate( const ob::State* state,
+void MujocoStatePropagator::propagate( const ob::State* state,
                                        const oc::Control* control,
                                        double duration,
                                        ob::State* result) const {
@@ -639,11 +643,16 @@ void copySE3State(
 bool MujocoStateValidityChecker::isValid(const ompl::base::State *state) const {
     mj_lock.lock();
     if (si_->getStateSpace()->isCompound()) {
-        copyOmplStateToMujoco(state->as<ob::CompoundState>(), si_, mj->m, mj->d, useVelocities);
+        copyOmplStateToMujoco(
+            state->as<ob::CompoundState>(), si_, mj->m, mj->d, useVelocities);
     } else {
         copyOmplStateToMujoco(
-                state->as<ob::WrapperStateSpace::StateType>()->getState()->as<ob::RealVectorStateSpace::StateType>(),
-                si_, mj->m, mj->d, useVelocities);
+            state->as<ob::WrapperStateSpace::StateType>()->getState()
+                ->as<ob::RealVectorStateSpace::StateType>(),
+            si_,
+            mj->m,
+            mj->d,
+            useVelocities);
     }
     mj_fwdPosition(mj->m, mj->d);
     int ncon = mj->d->ncon;
