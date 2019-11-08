@@ -4,10 +4,13 @@ CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+*.so
 
 plan
 render_plan
 smooth_plan
+plan_kinematic
+render_plan_kinematic
 *.out
 *.csv
 
