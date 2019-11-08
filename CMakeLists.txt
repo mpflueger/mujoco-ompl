@@ -43,6 +43,7 @@ elseif(UNIX)
 endif()
 
 include_directories(${OMPL_INCLUDE_DIRS}, ${Boost_INCLUDE_DIR})
+include_directories(3rd_party/include)
 
 add_executable(plan
     plan.cpp

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <stdexcept>
 #include <string>
 
@@ -14,6 +15,7 @@
 #include <ompl/control/planners/sst/SST.h>
 #include <yaml-cpp/yaml.h>
 
+#include <cxxopts.hpp>
 #include "mujoco_wrapper.h"
 #include "mujoco_ompl_interface.h"
 
@@ -23,29 +25,75 @@ using namespace std;
 
 
 int main(int argc, char** argv) {
-    string xml_filename = "";
+    // Parse args with cxxargs
+    cxxopts::Options options("Plan", "Generate a kinodynamic plan");
+    options.add_options()
+        ("r,randomstart", "Use a random initial position")
+        ("prob", "Problem spec YAML file", cxxopts::value<string>())
+        ("extra_positional", "", cxxopts::value<vector<string> >())
+        ("t,timelimit", "Planning time limit", cxxopts::value<double>());
+    options.parse_positional({"prob", "extra_positional"});
+    options.positional_help("<Problem Spec YAML File>");
+
     string prob_config_filename = "";
-    if (argc >= 2) {
-        // xml_filename = argv[1];
-        prob_config_filename = argv[1];
-    } else {
-        //cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
-        cerr << "Format: plan <yaml problem spec> [time limit]"
-             << endl;
+    bool random_start = false;
+    double timelimit = 1.0;
+    bool help = false;
+    try {
+        auto result = options.parse(argc, argv);
+
+        if (result.count("prob")) {
+            prob_config_filename = result["prob"].as<string>();
+        } else {
+            help = true;
+        }
+
+        if (result.count("extra_positional")) {
+            cerr << "Unknown positional argument" << endl;
+            help = true;
+        }
+
+        if (result.count("randomstart")) {
+            random_start = result["randomstart"].as<bool>();
+        }
+
+        if (result.count("timelimit")) {
+            timelimit = result["timelimit"].as<double>();
+        }
+
+        if (help) {
+            cerr << options.help();
+            return -1;
+        }
+    } catch(cxxopts::OptionException e) {
+        cerr << e.what() << endl;
+        cerr << options.help();
         return -1;
     }
 
+    // string prob_config_filename = "";
+    // if (argc >= 2) {
+    //     prob_config_filename = argv[1];
+    // } else {
+    //     //cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
+    //     cerr << "Format: plan <yaml problem spec> [time limit]"
+    //          << endl;
+    //     return -1;
+    // }
+
     // Optional time limit
-    double timelimit = 1.0;
-    if (argc >= 3) {
-        stringstream ss;
-        ss << argv[2];
-        ss >> timelimit;
-    }
+    // double timelimit = 1.0;
+    // if (argc >= 3) {
+    //     stringstream ss;
+    //     ss << argv[2];
+    //     ss >> timelimit;
+    // }
 
     // Load yaml information
     //   This should contain instructions on how to setup the planning problem
+    string xml_filename = "";
     vector<double> start_vec;
+    vector<vector<double> > start_range;
     vector<double> goal_vec;
     string planner = "";
     double sst_selection_radius = -1.0;
@@ -58,6 +106,12 @@ int main(int argc, char** argv) {
 
         if (node["start"]) {
             start_vec = node["start"].as<vector<double> >();
+        }
+        if (node["start_range"]) {
+            for(int i=0; i<node["start_range"].size(); i++) {
+                start_range.push_back(
+                    node["start_range"][i].as<vector<double> >());
+            }
         }
         if (node["goal"]) {
             goal_vec = node["goal"].as<vector<double> >();
@@ -75,8 +129,6 @@ int main(int argc, char** argv) {
     auto mj(make_shared<MuJoCo>(mjkey_filename));
 
     // Get xml file name
-    // TODO: make this more modern (argparsing, regex)
-    //   could use boost.program_options
     if (xml_filename.find(".xml") == string::npos) {
         cerr << "XML model file is required" << endl;
         return -1;
@@ -137,6 +189,17 @@ int main(int argc, char** argv) {
     for(int i=0; i < start_vec.size(); i++) {
         start_ss[i] = start_vec[i];
     }
+    if (random_start) {
+        // TODO: create a random start pose from the specified range
+        default_random_engine gen;
+        uniform_real_distribution<double> dist(0.0, 1.0);
+
+        for(int i=0; i < start_vec.size(); i++) {
+            // start_ss[i] = start_vec[i];
+            //start_range[i][0] + (start_range[i][1] - start_range[i][0]) * dist(gen)
+        }
+    }
+
     ob::ScopedState<> goal_ss(ss.getStateSpace());
     for(int i=0; i < goal_vec.size(); i++) {
         goal_ss[i] = goal_vec[i];

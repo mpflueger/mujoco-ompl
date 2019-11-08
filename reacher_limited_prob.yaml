@@ -8,7 +8,7 @@ sst_pruning_radius: 0.002
 #          joint0_vel, joint1_vel, target_x_vel, target_y_vel]
 # note: angles in radians, as per internal ompl representations
 start: [0, 0, 0.1, 0.1, 0, 0, 0, 0]
-start_rand: [
+start_range: [
   [-3.14, 3.14],
   [-3, 3],
   [0.1, 0.1],
