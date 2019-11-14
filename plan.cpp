@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "boost/filesystem.hpp"
+
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/control/planners/est/EST.h>
 #include <ompl/control/planners/kpiece/KPIECE1.h>
@@ -21,6 +23,7 @@
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
+namespace filesystem = boost::filesystem;
 using namespace std;
 
 
@@ -31,11 +34,14 @@ int main(int argc, char** argv) {
         ("r,randomstart", "Use a random initial position")
         ("prob", "Problem spec YAML file", cxxopts::value<string>())
         ("extra_positional", "", cxxopts::value<vector<string> >())
-        ("t,timelimit", "Planning time limit", cxxopts::value<double>());
+        ("t,timelimit", "Planning time limit", cxxopts::value<double>())
+        ("o,output", "Output file name", cxxopts::value<string>()
+            ->default_value("plan.out"));
     options.parse_positional({"prob", "extra_positional"});
     options.positional_help("<Problem Spec YAML File>");
 
     string prob_config_filename = "";
+    string output_fn = "";
     bool random_start = false;
     double timelimit = 1.0;
     bool help = false;
@@ -46,6 +52,10 @@ int main(int argc, char** argv) {
             prob_config_filename = result["prob"].as<string>();
         } else {
             help = true;
+        }
+
+        if (result.count("output")) {
+            output_fn = result["output"].as<string>();
         }
 
         if (result.count("extra_positional")) {
@@ -102,7 +112,9 @@ int main(int argc, char** argv) {
         YAML::Node node = YAML::LoadFile(prob_config_filename);
 
         // Copy variables
-        xml_filename = node["mujoco_config"].as<string>();
+        xml_filename =
+            filesystem::path(prob_config_filename).parent_path().string();
+        xml_filename += "/" + node["mujoco_config"].as<string>();
 
         if (node["start"]) {
             start_vec = node["start"].as<vector<double> >();
@@ -190,15 +202,20 @@ int main(int argc, char** argv) {
         start_ss[i] = start_vec[i];
     }
     if (random_start) {
-        // TODO: create a random start pose from the specified range
-        default_random_engine gen;
+        // Create a random start pose from the specified range
+        unsigned int seed = std::chrono::system_clock::now()
+            .time_since_epoch().count();
+        default_random_engine gen(seed);
         uniform_real_distribution<double> dist(0.0, 1.0);
 
         for(int i=0; i < start_vec.size(); i++) {
-            // start_ss[i] = start_vec[i];
-            //start_range[i][0] + (start_range[i][1] - start_range[i][0]) * dist(gen)
+            start_ss[i] = start_range[i][0]
+                + (start_range[i][1] - start_range[i][0]) * dist(gen);
         }
     }
+    cerr << "Init State: ";
+    start_ss.print(cerr);
+    cerr << endl;
 
     ob::ScopedState<> goal_ss(ss.getStateSpace());
     for(int i=0; i < goal_vec.size(); i++) {
@@ -216,9 +233,10 @@ int main(int argc, char** argv) {
 
         // Write solution to file
         ofstream out_file;
-        out_file.open("plan.out");
+        out_file.open(output_fn);
         ss.getSolutionPath().printAsMatrix(out_file);
         out_file.close();
+        cout << "Solution wrote to file \"" << output_fn << "\"" << endl;
     }
 
     return 0;

@@ -58,6 +58,7 @@ target_link_libraries(plan Eigen3::Eigen)
 target_link_libraries(plan mujoco-nogl)
 target_link_libraries(plan Threads::Threads)
 target_link_libraries(plan yaml-cpp)
+target_link_libraries(plan Boost::filesystem)
 
 add_executable(render_plan render_plan.cpp
 		src/mujoco_wrapper.cpp
