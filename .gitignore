@@ -6,6 +6,7 @@ cmake_install.cmake
 Makefile
 *.so
 
+data
 plan
 render_plan
 smooth_plan
