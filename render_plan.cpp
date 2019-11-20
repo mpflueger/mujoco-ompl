@@ -39,7 +39,7 @@ vector<vector<double> > readPlan(istream& file) {
 int main(int argc, char** argv) {
     string xml_filename;
     string plan_filename;
-    if (argc >= 2) {
+    if (argc >= 3) {
         xml_filename = argv[1];
         plan_filename = argv[2];
     } else {

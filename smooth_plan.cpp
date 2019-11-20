@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 
+#include <cxxopts.hpp>
 #include "mujoco_wrapper.h"
 #include "mujoco_ompl_interface.h"
 
@@ -51,31 +52,96 @@ vector<double>& operator<<(vector<double>& v, const MuJoCoState& s) {
 
 
 int main(int argc, char** argv) {
-    string xml_filename;
-    string plan_filename;
-    if (argc >= 2) {
-        xml_filename = argv[1];
-        plan_filename = argv[2];
-    } else {
-        cerr << "Format: smooth_plan <MuJoCo XML config> <plan file>" << endl;
+    // Parse args with cxxargs
+    cxxopts::Options options(
+        "smooth_plan",
+        "Take a plan with irregular time steps and smooth it out into uniform"
+        " short time steps by running it through the simulator");
+    options.add_options()
+        ("plan", "Plan file", cxxopts::value<string>())
+        ("extra_positional", "", cxxopts::value<vector<string> >())
+        ("m,mjxml", "MuJoCo XML config file", cxxopts::value<string>())
+        ("o,output", "Output file name", cxxopts::value<string>())
+        ("j,json", "Output in JSON format")
+        //("c,csv", "Output in CSV format")
+        //("raw", "Output in raw format (space seperated values)")
+        ;
+    options.parse_positional({"plan", "extra_positional"});
+    options.positional_help("<Plan file>");
+
+    string plan_fn = "";
+    string mjxml_fn = "";
+    string output_fn = "";
+    bool output_json = false;
+    //bool output_csv = false;
+    bool help = false;
+    try {
+        auto result = options.parse(argc, argv);
+
+        if (result.count("plan")) {
+            plan_fn = result["plan"].as<string>();
+        } else {
+            help = true;
+        }
+
+        if (result.count("mjxml")) {
+            mjxml_fn = result["mjxml"].as<string>();
+        }
+
+        if (result.count("output")) {
+            output_fn = result["output"].as<string>();
+        }
+
+        if (result.count("extra_positional")) {
+            cerr << "Unknown positional argument" << endl;
+            help = true;
+        }
+
+        if (result.count("json")) {
+            output_json = result["json"].as<bool>();
+        }
+
+        // if (result.count("csv")) {
+        //     output_csv = result["csv"].as<bool>();
+        // }
+
+        if (help) {
+            cerr << options.help();
+            return -1;
+        }
+    } catch(cxxopts::OptionException e) {
+        cerr << e.what() << endl;
+        cerr << options.help();
         return -1;
     }
+
+    // TODO: use regex
+    if (output_json) {
+        if (output_fn.find(".json") == string::npos) {
+            cerr << "Please output JSON to a .json file" << endl;
+            return -1;
+        }
+    }
+    // if (output_csv) {
+    //     if (output_fn.find(".csv") == string::npos) {
+    //         cerr << "Please output CSV to a .csv file" << endl;
+    //         return -1;
+    //     }
+    // }
 
     // Create MuJoCo Object
     string mjkey_filename = strcat(getenv("HOME"), "/.mujoco/mjkey.txt");
     auto mj(make_shared<MuJoCo>(mjkey_filename));
 
-    // Get xml file name
-    // TODO: make this more modern (argparsing, regex)
-    //   could use boost.program_options
-    if (xml_filename.find(".xml") == string::npos) {
-        cerr << "XML model file is required" << endl;
+    // Check xml filename
+    if (mjxml_fn.find(".xml") == string::npos) {
+        cerr << "MuJoCo XML model file is required" << endl;
         return -1;
     }
 
     // Load Model
-    cerr << "Loading MuJoCo config from: " << xml_filename << endl;
-    if (!mj->loadXML(xml_filename)) {
+    cerr << "Loading MuJoCo config from: " << mjxml_fn << endl;
+    if (!mj->loadXML(mjxml_fn)) {
         cerr << "Could not load XML model file" << endl;
         return -1;
     }
@@ -87,7 +153,7 @@ int main(int argc, char** argv) {
     }
 
     // Read the plan file
-    ifstream plan_file(plan_filename);
+    ifstream plan_file(plan_fn);
     auto plan = readPlan(plan_file);
     plan_file.close();
 
@@ -136,15 +202,86 @@ int main(int argc, char** argv) {
     state_vec << mj->getState();
     smooth_plan.push_back(state_vec);
 
-    // Write smoothed plan to cout
-    for(auto const& i : smooth_plan) {
-        if (i.size() > 0) {
-            cout << i[0];
+    if (output_json) {
+        // write data in JSON format
+        // sample:
+        // {
+        //   "state_dims": [
+        //     joint1,
+        //     joint1vel,
+        //     control1,
+        //     time
+        //   ]
+        //   "path": [
+        //     [0, 0, 0, 0],
+        //     [0, 0, 0, 1],
+        //   ]
+        // }
+        //
+        ofstream out_file(output_fn);
+        out_file << "{\n"
+                 << "  \"state_dims\": [\n";
+        // write joint names
+        for(auto const& i : getJointInfo(mj->m)) {
+            out_file << "    \"" << i.name << "\",\n";
         }
-        for(size_t j=1; j < i.size(); j++) {
-            cout << " " << i[j];
+        if (mj->m->nq != mj->m->nv) {
+            cerr << "ERROR: nq != nv" << endl;
         }
-        cout << endl;
+        // names for joint velocity
+        for(auto const& i : getJointInfo(mj->m)) {
+            out_file << "    \"" << i.name << "vel\",\n";
+        }
+        // control dimensions
+        for(int i=1; i < mj->m->nu + 1; i++) {
+
+            out_file << "    \"control" << i << "\",\n";
+        }
+        out_file << "    \"time\"\n"
+                 << "  ],\n"
+                 << "  \"path\": [\n";
+
+        // write path data
+        for(auto const& i : smooth_plan) {
+            // write data from step i
+            out_file << "    [";
+            if (i.size() > 0) {
+                out_file << i[0];
+            }
+            for(size_t j=1; j < i.size(); j++) {
+                out_file << ", " << i[j];
+            }
+            out_file << "],\n";
+        }
+
+        out_file << "  ]\n"
+                 << "}";
+        out_file.close();
+    }
+    // else if (output_csv) {
+    //     cerr << "ERROR: CSV output is not implemented yet" << endl;
+    //     ofstream out_file(output_fn);
+    //     // Write headers
+    //     // joint names
+    //     for(auto const& i : getJointInfo(mj->m)) {
+    //         out_file << i.name << ", ";
+    //     }
+    //     // joint velocities
+    //     // control dims
+    //     // time
+    // }
+    else {
+        // Write smoothed plan in space-separated format
+        ofstream out_file(output_fn);
+        for(auto const& i : smooth_plan) {
+            if (i.size() > 0) {
+                out_file << i[0];
+            }
+            for(size_t j=1; j < i.size(); j++) {
+                out_file << " " << i[j];
+            }
+            out_file << endl;
+        }
     }
 
     return 0;

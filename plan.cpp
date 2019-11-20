@@ -81,24 +81,6 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // string prob_config_filename = "";
-    // if (argc >= 2) {
-    //     prob_config_filename = argv[1];
-    // } else {
-    //     //cerr << "Format: plan <MuJoCo XML config> <yaml problem spec> [time limit]"
-    //     cerr << "Format: plan <yaml problem spec> [time limit]"
-    //          << endl;
-    //     return -1;
-    // }
-
-    // Optional time limit
-    // double timelimit = 1.0;
-    // if (argc >= 3) {
-    //     stringstream ss;
-    //     ss << argv[2];
-    //     ss >> timelimit;
-    // }
-
     // Load yaml information
     //   This should contain instructions on how to setup the planning problem
     string xml_filename = "";
