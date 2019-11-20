@@ -1,0 +1,15 @@
+{
+  "state_dims": [
+    "joint1",
+    "joint2",
+    "joint1vel",
+    "joint2vel",
+    "control1",
+    "control2",
+    "time"
+  ],
+  "path": [
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1]
+  ]
+}
