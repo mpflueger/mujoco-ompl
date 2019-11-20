@@ -53,6 +53,7 @@ if __name__ == "__main__":
             exit()
     else:
         os.mkdir(args.savedir)
+        os.mkdir(os.path.join(args.savedir, "plans"))
 
     # Find or create the config file
     config_file = os.path.join(args.savedir, "prob.yaml")
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         with open(config_file, 'w') as cfh:
             yaml.dump(config_data, cfh)
 
-    outfile_base = os.path.join(args.savedir, "plan_")
+    outfile_base = os.path.join(args.savedir, "plans/plan_")
     planner_bin = os.path.join(os.getcwd(), "plan")
     planner_args = [
         planner_bin,
