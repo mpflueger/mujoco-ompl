@@ -1,6 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 import yaml
 
 def plot_data(data, info):
@@ -34,6 +35,18 @@ if __name__ == "__main__":
     with open(args.info, 'r') as file:
         info = yaml.safe_load(file)
 
-    data = np.loadtxt(args.filename, dtype='float', delimiter=' ')
+    # Choose appropriate data parsing based on file extension
+    if re.search('\.out$', args.filename):
+        # Read the space-separated value format of ompl
+        data = np.loadtxt(args.filename, dtype='float', delimiter=' ')
+    elif re.search('\.json$', args.filename):
+        # Read our json formatted data
+        with open(args.filename, 'r') as file:
+            json_data = yaml.safe_load(file)
+        data = np.array(json_data['path'])
+    else:
+        print("ERROR: File extension not recognized.")
+        exit()
+
     plot_data(data, info)
 
