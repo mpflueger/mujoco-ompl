@@ -1,6 +1,6 @@
 # mujoco-ompl
 
-**_This is research code!_** It is provided without any warranty, expressed or implied.  Other researcher are welcome to use this code for academic/non-commercial purposes.  If you are using our code, drop us a line, we would love to know what you are doing and how it is useful to you.
+**_This is research code!_** It is provided without any warranty, expressed or implied.  Other researchers are welcome to use this code for academic/non-commercial purposes.  If you are using our code, drop us a line, we would love to know what you are doing and how it is useful to you.
 
 This project is designed as an interface layer between OMPL and MuJoCo.  It builds planning spaces for OMPL based on MuJoCo environment specifications and allows OMPL planners to plan on those spaces by using MuJoCo as the underlying state propagator.  It was originally developed by Max Pflueger as a way of generating plan demonstrations for the [Plan-Space State Embedding](https://github.com/mpflueger/plan-space-state-embedding) project, and has since been extended for use in other ongoing projects.
 
