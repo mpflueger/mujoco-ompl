@@ -4,7 +4,7 @@ project(mujoco_planner)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 if(NOT OMPL_INCLUDE_DIRS)
 	find_package(ompl REQUIRED)
 endif()
