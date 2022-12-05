@@ -7,7 +7,7 @@
 #include <mutex>
 #include <vector>
 
-#include "mujoco.h"
+#include "mujoco/mujoco.h"
 
 
 struct JointInfo {
@@ -91,7 +91,7 @@ class MuJoCo {
         return d;
     }
 
-    
+
 
     std::string getJointName(int i) const {
         // Avert your eyes of this horror
@@ -140,19 +140,19 @@ class MuJoCo {
         d->time = s.time;
         for(size_t i=0; i < m->nq; i++) {
             if (i >= s.qpos.size()) break;
-            d->qpos[i] = s.qpos[i];    
+            d->qpos[i] = s.qpos[i];
         }
         for(size_t i=0; i < m->nv; i++) {
             if (i >= s.qvel.size()) break;
-            d->qvel[i] = s.qvel[i];    
+            d->qvel[i] = s.qvel[i];
         }
         for(size_t i=0; i < m->na; i++) {
             if (i >= s.act.size()) break;
-            d->act[i] = s.act[i];    
+            d->act[i] = s.act[i];
         }
         for(size_t i=0; i < m->nu; i++) {
             if (i >= s.ctrl.size()) break;
-            d->ctrl[i] = s.ctrl[i];    
+            d->ctrl[i] = s.ctrl[i];
         }
     }
 
@@ -198,4 +198,3 @@ class MuJoCo {
     static int mj_instance_count;
     static std::mutex mj_instance_count_lock;
 };
-

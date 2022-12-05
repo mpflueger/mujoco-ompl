@@ -228,7 +228,7 @@ shared_ptr<ob::CompoundStateSpace> makeCompoundStateSpace(
             break;
         }
         space->addSubspace(joint_space, 1.0);
-    } 
+    }
     if (next_qpos != m->nq) {
         cerr << "ERROR: joint dims: " << next_qpos
              << " vs nq: " << m->nq << endl;
