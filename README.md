@@ -59,13 +59,29 @@ To create a plan file (Assume you are in the `build` directory):
 ```
 ./plan ../problems/reacher_prob.yaml -o reacher_plan.out
 ```
+The output of this program ends with
+```
+...
+Found Solution with status: Exact solution
+Solution wrote to file "reacher_sol.out"
+```
 
 To visualize a plan as a graph (Assume you are in repo root directory):
 ```
-python plot_plan.py build/reacher_sol.out problems/reacher_info.yaml
+python3 plot_plan.py build/reacher_sol.out problems/reacher_info.yaml
 ```
+
+It may look like this:
+
+<img alt="reacher_plan_graph" src="https://user-images.githubusercontent.com/7720184/205773512-b4c8dce1-c341-45c5-ae98-4d956a513514.png" width="300px"/>
+
+
 
 To rollout a plan in MuJoCo with rendering (Assume you are in repo root directory)
 ```
 ./build/render_plan problems/reacher.xml build/reacher_sol.out
 ```
+
+You may see the reacher spinning in place, like:
+
+<img alt="reacher_plan_render" src="https://user-images.githubusercontent.com/7720184/205774142-d90aeb2b-15dc-40bb-b4ef-4560028110f3.png" width="400px"/>
