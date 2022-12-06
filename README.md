@@ -10,6 +10,9 @@ Some of the code found here is mildly project specific, and in the future we may
 
 
 ## Build Instructions (new)
+
+Note: below is currently only tested on Ubuntu 20.04.
+
 1. Download MuJoCo release from https://github.com/deepmind/mujoco/releases/tag/2.3.0 (last tested version: 2.3.0)
 
 2. Extract the content of compressed MuJoCo release into a folder `mujoco-2.3.0` under this repo's root directory.
@@ -47,23 +50,22 @@ Some of the code found here is mildly project specific, and in the future we may
       ```
 
 
-## Run
-MacOS requires to include the mujoco bin directory in the DYLD_LIBRARY_PATH:
+## Run (new)
+
+Note: below is currently only tested on Ubuntu 20.04.
+
+
+To create a plan file (Assume you are in the `build` directory):
 ```
-DYLD_LIBRARY_PATH=/Users/$USER/.mujoco/mujoco200/bin
+./plan ../problems/reacher_prob.yaml -o reacher_plan.out
 ```
 
-To create a plan file:
+To visualize a plan as a graph (Assume you are in repo root directory):
 ```
-./plan reacher.xml reacher_prob.yaml 10
-```
-
-To visualize a plan as a graph:
-```
-python3 plot_plan.py plan.out reacher_info.yaml
+python plot_plan.py build/reacher_sol.out problems/reacher_info.yaml
 ```
 
-To rollout a plan in MuJoCo with OpenGL rendering:
+To rollout a plan in MuJoCo with rendering (Assume you are in repo root directory)
 ```
-./render_plan reacher.xml plan.out
+./build/render_plan problems/reacher.xml build/reacher_sol.out
 ```
