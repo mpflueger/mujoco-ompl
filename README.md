@@ -55,7 +55,7 @@ Note: below is currently only tested on Ubuntu 20.04.
 Note: below is currently only tested on Ubuntu 20.04.
 
 
-To create a plan file (Assume you are in the `build` directory):
+**To create a plan file** (Assume you are in the `build` directory):
 ```
 ./plan ../problems/reacher_prob.yaml -o reacher_plan.out
 ```
@@ -66,7 +66,7 @@ Found Solution with status: Exact solution
 Solution wrote to file "reacher_sol.out"
 ```
 
-To visualize a plan as a graph (Assume you are in repo root directory):
+**To visualize a plan as a graph** (Assume you are in repo root directory):
 ```
 python3 plot_plan.py build/reacher_sol.out problems/reacher_info.yaml
 ```
@@ -77,7 +77,7 @@ It may look like this:
 
 
 
-To rollout a plan in MuJoCo with rendering (Assume you are in repo root directory)
+**To rollout a plan in MuJoCo with rendering** (Assume you are in repo root directory)
 ```
 ./build/render_plan problems/reacher.xml build/reacher_sol.out
 ```
