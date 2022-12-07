@@ -97,3 +97,6 @@ The plan will be written to `plan.out`. You can render it by
 ./build/render_plan_kinematic problems/2d_point.xml ./plan.out
 ```
 Visualization:
+
+<img alt="render_plan_collision_avoidance" src="https://user-images.githubusercontent.com/7720184/206159014-f62194c1-0a68-4a12-b715-0c74ed6b7022.png" width="400px"/>
+
