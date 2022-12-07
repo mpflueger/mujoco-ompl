@@ -55,9 +55,9 @@ Note: below is currently only tested on Ubuntu 20.04.
 Note: below is currently only tested on Ubuntu 20.04.
 
 
-**To create a plan file** (Assume you are in the `build` directory):
+**To create a plan file** (Assume you are in the repo root directory):
 ```
-./plan ../problems/reacher_prob.yaml -o reacher_plan.out
+./build/plan ./problems/reacher_prob.yaml -o reacher_plan.out
 ```
 The output of this program ends with
 ```
@@ -68,7 +68,7 @@ Solution wrote to file "reacher_sol.out"
 
 **To visualize a plan as a graph** (Assume you are in repo root directory):
 ```
-python3 plot_plan.py build/reacher_sol.out problems/reacher_info.yaml
+python3 plot_plan.py reacher_sol.out problems/reacher_info.yaml
 ```
 
 It may look like this:
@@ -85,3 +85,15 @@ It may look like this:
 You may see the reacher spinning in place, like:
 
 <img alt="reacher_plan_render" src="https://user-images.githubusercontent.com/7720184/205774142-d90aeb2b-15dc-40bb-b4ef-4560028110f3.png" width="400px"/>
+
+
+[**etpr**](https://github.com/etpr) added kinematic planner and collision check (see [pull request](https://github.com/mpflueger/mujoco-ompl/pull/3)).
+You can try it with the 2d_point problem by
+```
+./build/plan_kinematic problems/2d_point.xml problems/2d_point_prob.yaml 1
+```
+The plan will be written to `plan.out`. You can render it by
+```
+./build/render_plan_kinematic problems/2d_point.xml ./plan.out
+```
+Visualization:
