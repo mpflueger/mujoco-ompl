@@ -4,7 +4,7 @@
 #include <fstream>
 #include <string>
 
-#include "glfw3.h"
+#include <GLFW/glfw3.h>
 
 #include "mujoco_wrapper.h"
 #include "mujoco_ompl_interface.h"
